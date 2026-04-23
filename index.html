@@ -267,16 +267,23 @@ const API = "/api";
 
 // ── Shared helpers ─────────────────────────────────────────────
 async function apiFetch(params) {
-  const r = await fetch(API + "?" + new URLSearchParams(params));
+  const r = await fetch(API + "?" + new URLSearchParams(params), {
+    redirect: "follow",
+    mode: "cors"
+  });
   return r.json();
+}
 }
 async function apiPost(body) {
   const r = await fetch(API, {
     method: "POST",
     headers: { "Content-Type": "text/plain" },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
+    redirect: "follow",
+    mode: "cors"
   });
   return r.json();
+}
 }
 function fmtDate(d) {
   return d.getFullYear() + "-" +
