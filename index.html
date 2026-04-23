@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gym Coach Portal</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+       background: #f5f5f5; color: #333; font-size: 13px; min-height: 100vh; }
+
+/* ── Nav ── */
+.nav { background: white; border-bottom: 0.5px solid #e0e0e0;
+       padding: 0 16px; display: flex; align-items: center;
+       justify-content: space-between; height: 52px;
+       position: sticky; top: 0; z-index: 100; }
+.nav-title { font-size: 16px; font-weight: 600; color: #4a86e8; }
+.nav-tabs { display: flex; gap: 4px; }
+.nav-tab { padding: 6px 14px; border-radius: 6px; border: none;
+           background: transparent; cursor: pointer; font-size: 13px;
+           color: #666; font-weight: 500; transition: all 0.15s; }
+.nav-tab:hover { background: #f0f0f0; color: #333; }
+.nav-tab.active { background: #4a86e8; color: white; }
+
+/* ── Pages ── */
+.page { display: none; padding: 12px; }
+.page.active { display: block; }
+
+/* ── Toolbar ── */
+.toolbar { background: white; border-radius: 10px; border: 0.5px solid #e0e0e0;
+           padding: 10px 14px; margin-bottom: 12px;
+           display: flex; align-items: center; justify-content: space-between;
+           flex-wrap: wrap; gap: 8px; }
+.week-nav { display: flex; align-items: center; gap: 10px; }
+.week-title { font-size: 15px; font-weight: 500; min-width: 190px; text-align: center; }
+.btn { background: #f0f0f0; border: none; border-radius: 6px;
+       padding: 6px 12px; cursor: pointer; font-size: 13px; color: #333; }
+.btn:hover { background: #e0e0e0; }
+.btn-primary { background: #4a86e8; color: white; }
+.btn-primary:hover { background: #3a76d8; }
+.btn:disabled { background: #ccc; cursor: not-allowed; color: #888; }
+.loc-toggles { display: flex; gap: 6px; }
+.tog { padding: 5px 12px; font-size: 12px; font-weight: 500;
+       cursor: pointer; border-radius: 6px; border: 1.5px solid transparent; }
+.tog-gd      { background: #E6F1FB; color: #185FA5; border-color: #85B7EB; }
+.tog-gd.off  { background: #f0f0f0; color: #999; border-color: #ddd; }
+.tog-rl      { background: #E1F5EE; color: #0F6E56; border-color: #5DCAA5; }
+.tog-rl.off  { background: #f0f0f0; color: #999; border-color: #ddd; }
+
+/* ── Calendar ── */
+.cal-outer { overflow-x: auto; }
+.cal { border: 0.5px solid #ddd; border-radius: 10px; overflow: hidden;
+       background: white; min-width: 700px; }
+.cal-head { display: grid; background: #f8f8f8;
+            border-bottom: 0.5px solid #ddd; }
+.head-time { padding: 8px 6px; border-right: 0.5px solid #ddd;
+             font-size: 10px; color: #aaa; }
+.head-day { border-right: 0.5px solid #e0e0e0; padding: 6px 4px;
+            text-align: center; }
+.head-day:last-child { border-right: none; }
+.head-day-name { font-size: 10px; font-weight: 500; color: #888;
+                 text-transform: uppercase; letter-spacing: 0.04em; }
+.head-locs { display: flex; gap: 4px; justify-content: center; margin-top: 3px; }
+.head-loc { font-size: 9px; font-weight: 500; padding: 1px 5px; border-radius: 3px; }
+.head-loc.gd { background: #E6F1FB; color: #185FA5; }
+.head-loc.rl { background: #E1F5EE; color: #0F6E56; }
+.cal-body { }
+.cal-row { display: grid; border-bottom: 0.5px solid #f0f0f0; }
+.cal-row:last-child { border-bottom: none; }
+.time-cell { padding: 4px 6px; border-right: 0.5px solid #ddd;
+             display: flex; align-items: flex-start; padding-top: 5px; }
+.time-lbl { font-size: 10px; color: #bbb; white-space: nowrap; }
+.loc-col { display: flex; flex-direction: column; gap: 2px;
+           min-height: 52px; padding: 3px; }
+
+.chip { border-radius: 5px; padding: 3px 5px; font-size: 10px;
+        line-height: 1.3; cursor: default; }
+.chip-name  { font-weight: 500; font-size: 10px; }
+.chip-coach { font-size: 9px; opacity: 0.85; }
+.chip-swap  { font-size: 8px; font-weight: 500; color: #854F0B; margin-top: 1px; }
+.gd-chip   { background: #E6F1FB; color: #0C447C; }
+.rl-chip   { background: #E1F5EE; color: #085041; }
+.wl-chip   { background: #EEEDFE; color: #3C3489; }
+.vf-chip   { background: #EAF3DE; color: #27500A; }
+.og-chip   { background: #FAEEDA; color: #633806; }
+.sp-chip   { background: #FAECE7; color: #993C1D; }
+.open-chip { background: #FCEBEB; color: #A32D2D; border: 1px solid #F09595; }
+.swap-chip { outline: 1.5px solid #EF9F27; }
+.edit-sel  { width: 100%; font-size: 9px; border: none; background: transparent;
+             color: inherit; cursor: pointer; font-family: inherit;
+             padding: 0; margin-top: 2px; border-radius: 3px; }
+
+.legend { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; padding: 0 2px; }
+.li { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #666; }
+.ld { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+/* ── Availability form ── */
+.card { background: white; border-radius: 10px; border: 0.5px solid #e0e0e0;
+        padding: 16px; margin-bottom: 14px; }
+.field-label { display: block; font-weight: 500; margin-bottom: 6px; font-size: 13px; }
+select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
+                border-radius: 7px; font-size: 14px; margin-bottom: 12px;
+                font-family: inherit; }
+.cal-wrap { }
+.cal-hdr { display: flex; align-items: center; justify-content: space-between;
+           margin-bottom: 10px; }
+.cal-hdr h3 { font-size: 15px; font-weight: 500; }
+.mini-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; }
+.dname { text-align: center; font-size: 11px; font-weight: 500;
+         color: #888; padding: 3px 0; }
+.mday { text-align: center; padding: 7px 3px; border-radius: 5px;
+        cursor: pointer; font-size: 13px; border: 2px solid transparent;
+        user-select: none; transition: all 0.1s; }
+.mday:hover:not(.other) { background: #e8f0fe; }
+.mday.other { color: #ccc; }
+.mday.today-d { font-weight: 700; color: #185FA5; }
+.mday.sel-d  { background: #4a86e8 !important; color: white !important; }
+.mday.range-d { background: #c5d8fb; }
+.mday.rstart { background: #4a86e8; color: white; }
+.mday.rend   { background: #4a86e8; color: white; }
+.mday.has-unavailable  { border-color: #e53935; }
+.mday.has-available_am { border-color: #43a047; }
+.mday.has-available_pm { border-color: #fb8c00; }
+.mday.has-available    { border-color: #9e9e9e; }
+.type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.type-btn { padding: 10px; border: 2px solid #ddd; border-radius: 7px;
+            background: white; cursor: pointer; font-size: 13px; font-weight: 500;
+            text-align: center; transition: all 0.15s; }
+.type-btn:hover { border-color: #4a86e8; }
+.type-btn.active { color: white; border-color: transparent; }
+.type-btn.unavailable.active  { background: #e53935; }
+.type-btn.available_am.active { background: #43a047; }
+.type-btn.available_pm.active { background: #fb8c00; }
+.type-btn.available.active    { background: #9e9e9e; }
+.sel-range { font-size: 12px; color: #666; padding: 7px 10px;
+             background: #f0f4ff; border-radius: 6px; margin-bottom: 10px; }
+.sub-item { display: flex; align-items: center; justify-content: space-between;
+            padding: 9px 11px; border-radius: 7px; margin-bottom: 7px;
+            border-left: 4px solid #ddd; background: #fafafa; }
+.sub-item.unavailable  { border-color: #e53935; }
+.sub-item.available_am { border-color: #43a047; }
+.sub-item.available_pm { border-color: #fb8c00; }
+.sub-item.available    { border-color: #9e9e9e; }
+.sub-dates { font-weight: 500; font-size: 13px; }
+.sub-type  { color: #888; font-size: 11px; margin-top: 2px; }
+.sub-btns  { display: flex; gap: 6px; flex-shrink: 0; }
+.btn-edit   { padding: 4px 10px; background: #e8f0fe; color: #4a86e8;
+              border: none; border-radius: 5px; cursor: pointer; font-size: 12px; }
+.btn-del    { padding: 4px 10px; background: #fce8e6; color: #e53935;
+              border: none; border-radius: 5px; cursor: pointer; font-size: 12px; }
+.msg { padding: 10px; border-radius: 7px; margin-bottom: 10px;
+       font-size: 13px; text-align: center; display: none; }
+.msg.success { background: #e8f5e9; color: #2e7d32; display: block; }
+.msg.error   { background: #fce8e6; color: #c62828; display: block; }
+
+/* ── Totals ── */
+.totals-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.totals-table th { padding: 6px 10px; text-align: left;
+                   background: #f0f6ff; border-bottom: 0.5px solid #e0e0e0;
+                   font-weight: 500; }
+.totals-table td { padding: 5px 10px; border-bottom: 0.5px solid #f0f0f0; }
+.totals-table tr:nth-child(even) td { background: #fafafa; }
+.week-block { background: white; border-radius: 10px; border: 0.5px solid #e0e0e0;
+              overflow: hidden; margin-bottom: 14px; }
+.week-block-title { background: #4a86e8; color: white; padding: 8px 14px;
+                    font-weight: 500; font-size: 14px; }
+
+/* ── Toast ── */
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+         background: #333; color: white; padding: 8px 18px; border-radius: 8px;
+         font-size: 13px; opacity: 0; transition: opacity 0.3s;
+         pointer-events: none; z-index: 999; white-space: nowrap; }
+.toast.show { opacity: 1; }
+
+.loading { text-align: center; padding: 40px; color: #888; font-size: 14px; }
+.hint { font-size: 11px; color: #aaa; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-title">🏋️ Coach Portal</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('schedule')">Schedule</button>
+    <button class="nav-tab" onclick="showPage('availability')">Availability</button>
+    <button class="nav-tab" onclick="showPage('totals')">Totals</button>
+  </div>
+</nav>
+
+<!-- ── SCHEDULE PAGE ── -->
+<div class="page active" id="page-schedule">
+  <div class="toolbar">
+    <div class="week-nav">
+      <button class="btn" onclick="changeWeek(-1)">&#8592;</button>
+      <div class="week-title" id="weekTitle">Loading...</div>
+      <button class="btn" onclick="changeWeek(1)">&#8594;</button>
+    </div>
+    <div class="loc-toggles">
+      <button class="tog tog-gd" id="togGD" onclick="toggleLoc('gd')">Guilderland</button>
+      <button class="tog tog-rl" id="togRL" onclick="toggleLoc('rl')">Round Lake</button>
+    </div>
+  </div>
+  <div id="calContainer"><div class="loading">Loading schedule...</div></div>
+  <div class="legend" id="legend">
+    <div class="li"><div class="ld" style="background:#E6F1FB;border:1px solid #85B7EB"></div>Guilderland</div>
+    <div class="li"><div class="ld" style="background:#E1F5EE;border:1px solid #5DCAA5"></div>Round Lake</div>
+    <div class="li"><div class="ld" style="background:#EAF3DE;border:1px solid #C0DD97"></div>ViTaFIT</div>
+    <div class="li"><div class="ld" style="background:#EEEDFE;border:1px solid #CECBF6"></div>Weightlifting</div>
+    <div class="li"><div class="ld" style="background:#FAEEDA;border:1px solid #FAC775"></div>Open Gym</div>
+    <div class="li"><div class="ld" style="background:#FAECE7;border:1px solid #F5C4B3"></div>Spartan</div>
+    <div class="li"><div class="ld" style="background:#FCEBEB;border:1px solid #F09595"></div>OPEN slot</div>
+    <div class="li"><div class="ld" style="background:white;outline:1.5px solid #EF9F27;border-radius:3px"></div>Swap</div>
+  </div>
+</div>
+
+<!-- ── AVAILABILITY PAGE ── -->
+<div class="page" id="page-availability">
+  <div class="card">
+    <label class="field-label">Your Name</label>
+    <select id="coachSelect">
+      <option value="">— Select your name —</option>
+    </select>
+  </div>
+
+  <div id="availSection" style="display:none">
+    <div class="card">
+      <div class="cal-hdr">
+        <button class="btn" onclick="avChangeMonth(-1)">&#8592;</button>
+        <h3 id="avCalTitle"></h3>
+        <button class="btn" onclick="avChangeMonth(1)">&#8594;</button>
+      </div>
+      <div class="mini-grid" id="avGrid"></div>
+      <p class="hint">Click a day or drag to select a range.</p>
+    </div>
+
+    <div class="card" id="avForm" style="display:none">
+      <div class="sel-range" id="avRangeLabel"></div>
+      <label class="field-label">Availability</label>
+      <div class="type-grid">
+        <button class="type-btn unavailable"  onclick="avSelectType('unavailable')">🚫 Unavailable</button>
+        <button class="type-btn available"    onclick="avSelectType('available')">✅ All Day</button>
+        <button class="type-btn available_am" onclick="avSelectType('available_am')">🌅 AM Only</button>
+        <button class="type-btn available_pm" onclick="avSelectType('available_pm')">🌆 PM Only</button>
+      </div>
+      <div id="avMsg" class="msg"></div>
+      <button class="btn btn-primary" id="avSubmitBtn" onclick="avSubmit()" disabled style="width:100%;padding:12px;font-size:14px;font-weight:600;">
+        Save
+      </button>
+    </div>
+
+    <div class="card">
+      <label class="field-label" style="margin-bottom:10px">Your Submissions</label>
+      <div id="avSubList"><div class="loading">Loading...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOTALS PAGE ── -->
+<div class="page" id="page-totals">
+  <div id="totalsContainer"><div class="loading">Loading totals...</div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = "/api";
+
+// ── Shared helpers ─────────────────────────────────────────────
+async function apiFetch(params) {
+  const r = await fetch(API + "?" + new URLSearchParams(params));
+  return r.json();
+}
+async function apiPost(body) {
+  const r = await fetch(API, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },
+    body: JSON.stringify(body)
+  });
+  return r.json();
+}
+function fmtDate(d) {
+  return d.getFullYear() + "-" +
+    String(d.getMonth()+1).padStart(2,"0") + "-" +
+    String(d.getDate()).padStart(2,"0");
+}
+function fmtDisp(d) {
+  return d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+}
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2500);
+}
+function showPage(id) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+  document.getElementById("page-" + id).classList.add("active");
+  event.target.classList.add("active");
+  if (id === "totals" && !totalsLoaded) loadTotals();
+}
+
+// ════════════════════════════════════════════════
+// SCHEDULE
+// ════════════════════════════════════════════════
+let schedData = [], schedCoaches = [], schedWeeks = [], schedWeekIdx = 0;
+let gdOn = true, rlOn = true;
+const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const LOCS = ["Guilderland","Round Lake"];
+
+async function initSchedule() {
+  try {
+    [schedData, schedCoaches] = await Promise.all([
+      apiFetch({action:"getSchedule"}),
+      apiFetch({action:"getCoaches"})
+    ]);
+    buildWeekList();
+    renderWeek();
+  } catch(e) {
+    document.getElementById("calContainer").innerHTML =
+      `<div class="loading">Error loading schedule.</div>`;
+  }
+}
+
+function buildWeekList() {
+  const seen = {};
+  schedData.forEach(r => {
+    const d    = new Date(r.date + "T12:00:00");
+    const day  = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    const mon  = new Date(d); mon.setDate(d.getDate() + diff);
+    const mk   = fmtDate(mon);
+    seen[mk] = true;
+  });
+  schedWeeks = Object.keys(seen).sort();
+  const today = fmtDate(new Date());
+  schedWeekIdx = schedWeeks.findIndex(w => w >= today);
+  if (schedWeekIdx < 0) schedWeekIdx = schedWeeks.length - 1;
+}
+
+function changeWeek(dir) {
+  schedWeekIdx = Math.max(0, Math.min(schedWeeks.length-1, schedWeekIdx+dir));
+  renderWeek();
+}
+
+function toggleLoc(loc) {
+  if (loc==="gd") { gdOn=!gdOn; document.getElementById("togGD").classList.toggle("off",!gdOn); }
+  else            { rlOn=!rlOn; document.getElementById("togRL").classList.toggle("off",!rlOn); }
+  renderWeek();
+}
+
+function renderWeek() {
+  if (!schedWeeks.length) return;
+  const monday = new Date(schedWeeks[schedWeekIdx] + "T12:00:00");
+  const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
+  const today  = fmtDate(new Date());
+  document.getElementById("weekTitle").textContent = "Week of " + fmtDisp(monday);
+
+  const wStart  = fmtDate(monday), wEnd = fmtDate(sunday);
+  const wkData  = schedData.filter(r => r.date >= wStart && r.date <= wEnd);
+  const timeSet = {};
+  wkData.forEach(r => { timeSet[r.time] = r.timeDisplay; });
+  const times = Object.keys(timeSet).sort();
+
+  const visLocs = LOCS.filter((l,i) => (i===0&&gdOn)||(i===1&&rlOn));
+  if (!visLocs.length) {
+    document.getElementById("calContainer").innerHTML =
+      '<div class="loading">Select at least one location.</div>';
+    return;
+  }
+
+  const dayDates = DAYS.map((_,i) => {
+    const d = new Date(monday); d.setDate(monday.getDate()+i); return fmtDate(d);
+  });
+
+  const locCols     = DAYS.length * visLocs.length;
+  const colTemplate = `56px repeat(${locCols}, 1fr)`;
+
+  let h = `<div class="cal-outer"><div class="cal">`;
+
+  // Header
+  h += `<div class="cal-head" style="grid-template-columns:${colTemplate}">`;
+  h += `<div class="head-time"></div>`;
+  DAYS.forEach((day,di) => {
+    const ds   = dayDates[di];
+    const date = new Date(ds+"T12:00:00");
+    const span = visLocs.length>1 ? `grid-column:span ${visLocs.length};` : "";
+    const br   = di<DAYS.length-1 ? "border-right:1px solid #e0e0e0;" : "";
+    h += `<div class="head-day" style="${span}${br}">`;
+    h += `<div class="head-day-name">${day.slice(0,3)} ${date.toLocaleDateString("en-US",{month:"short"})} ${date.getDate()}</div>`;
+    h += `<div class="head-locs">${visLocs.map(l=>`<span class="head-loc ${l==="Guilderland"?"gd":"rl"}">${l==="Guilderland"?"GD":"RL"}</span>`).join("")}</div>`;
+    h += `</div>`;
+  });
+  h += `</div>`;
+
+  // Body
+  h += `<div class="cal-body">`;
+  times.forEach(time => {
+    h += `<div class="cal-row" style="grid-template-columns:${colTemplate}">`;
+    h += `<div class="time-cell"><span class="time-lbl">${timeSet[time]}</span></div>`;
+    DAYS.forEach((day,di) => {
+      const ds = dayDates[di];
+      visLocs.forEach((loc,li) => {
+        const isLast = li===visLocs.length-1 && di===DAYS.length-1;
+        const border = isLast ? "" :
+          (li<visLocs.length-1 ? "border-right:0.5px solid #e8e8e8;" : "border-right:1px solid #d0d0d0;");
+        const slots = wkData.filter(r => r.date===ds && r.time===time && r.location===loc);
+        h += `<div class="loc-col" style="${border}border-bottom:0.5px solid #f0f0f0;">`;
+        slots.forEach(slot => {
+          const cc = getChipClass(slot.classType, loc);
+          const sc = slot.isSwap ? " swap-chip" : "";
+          const oc = slot.coach==="OPEN" ? " open-chip" : "";
+          h += `<div class="chip ${cc}${sc}${oc}">`;
+          h += `<div class="chip-name">${slot.classType}</div>`;
+          h += `<div class="chip-coach">${slot.coach}</div>`;
+          if (slot.isSwap) h += `<div class="chip-swap">&#8596; SWAP</div>`;
+          h += `<select class="edit-sel" onchange="doUpdateCoach(${slot.rowIndex},this.value,this)">`;
+          h += `<option value="">— reassign —</option><option value="OPEN">OPEN</option>`;
+          schedCoaches.forEach(c => {
+            h += `<option value="${c}"${c===slot.coach?" selected":""}>${c}</option>`;
+          });
+          h += `</select></div>`;
+        });
+        h += `</div>`;
+      });
+    });
+    h += `</div>`;
+  });
+  h += `</div></div></div>`;
+  document.getElementById("calContainer").innerHTML = h;
+}
+
+async function doUpdateCoach(rowIndex, newCoach, sel) {
+  if (!newCoach) return;
+  try {
+    await apiPost({ action:"updateCoach", rowIndex, coach:newCoach });
+    const row = schedData.find(r => r.rowIndex===rowIndex);
+    if (row) { row.coach=newCoach; row.isSwap=newCoach!=="OPEN"; }
+    showToast("Updated to " + (newCoach==="OPEN"?"OPEN":newCoach));
+    renderWeek();
+  } catch(e) {
+    showToast("Error saving"); sel.value="";
+  }
+}
+
+function getChipClass(ct, loc) {
+  const c = (ct||"").toLowerCase();
+  if (c.includes("weightlifting")||c==="wl") return "wl-chip";
+  if (c.includes("vitafit")||c==="vf")       return "vf-chip";
+  if (c.includes("open gym"))                return "og-chip";
+  if (c.includes("spartan"))                 return "sp-chip";
+  return loc==="Guilderland" ? "gd-chip" : "rl-chip";
+}
+
+// ════════════════════════════════════════════════
+// AVAILABILITY
+// ════════════════════════════════════════════════
+let avCoach="", avSubs=[], avYear=new Date().getFullYear(),
+    avMonth=new Date().getMonth(), avStart=null, avEnd=null,
+    avDragging=false, avType="", avEditing=null;
+
+async function initAvailability() {
+  const coaches = await apiFetch({action:"getCoaches"});
+  const sel = document.getElementById("coachSelect");
+  coaches.forEach(n => {
+    const o = document.createElement("option");
+    o.value = o.textContent = n;
+    sel.appendChild(o);
+  });
+}
+
+document.getElementById("coachSelect").addEventListener("change", async function() {
+  avCoach = this.value;
+  if (!avCoach) { document.getElementById("availSection").style.display="none"; return; }
+  document.getElementById("availSection").style.display="block";
+  await avLoadSubs();
+  avRenderCal();
+});
+
+function avChangeMonth(dir) {
+  avMonth += dir;
+  if (avMonth>11) { avMonth=0; avYear++; }
+  if (avMonth<0)  { avMonth=11; avYear--; }
+  avRenderCal();
+}
+
+function avRenderCal() {
+  const months=["January","February","March","April","May","June",
+                "July","August","September","October","November","December"];
+  document.getElementById("avCalTitle").textContent = `${months[avMonth]} ${avYear}`;
+  const grid = document.getElementById("avGrid");
+  grid.innerHTML = "";
+  ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].forEach(d => {
+    const el=document.createElement("div"); el.className="dname"; el.textContent=d; grid.appendChild(el);
+  });
+  const first=new Date(avYear,avMonth,1), last=new Date(avYear,avMonth+1,0);
+  const today=new Date(); today.setHours(0,0,0,0);
+  let off=first.getDay()-1; if(off<0) off=6;
+  for(let i=0;i<off;i++) {
+    const d=new Date(avYear,avMonth,1-(off-i));
+    grid.appendChild(avMakeDayEl(d,true));
+  }
+  for(let d=1;d<=last.getDate();d++) grid.appendChild(avMakeDayEl(new Date(avYear,avMonth,d),false));
+  const rem=(off+last.getDate())%7;
+  if(rem>0) for(let i=1;i<=7-rem;i++) grid.appendChild(avMakeDayEl(new Date(avYear,avMonth+1,i),true));
+}
+
+function avMakeDayEl(date,other) {
+  const el=document.createElement("div"); el.className="mday";
+  el.textContent=date.getDate(); el.dataset.date=fmtDate(date);
+  if(other) el.classList.add("other");
+  const today=new Date(); today.setHours(0,0,0,0);
+  if(date.getTime()===today.getTime()) el.classList.add("today-d");
+  const sub=avGetSub(date);
+  if(sub) el.classList.add("has-"+avNorm(sub.type));
+  avApplyRange(el,date);
+  el.addEventListener("mousedown",e=>{
+    avDragging=true; avStart=new Date(date); avEnd=new Date(date);
+    avRenderCal(); e.preventDefault();
+  });
+  el.addEventListener("mouseenter",()=>{
+    if(!avDragging) return; avEnd=new Date(date); avRenderCal();
+  });
+  el.addEventListener("mouseup",()=>{
+    if(!avDragging) return; avDragging=false;
+    if(avStart>avEnd)[avStart,avEnd]=[avEnd,avStart];
+    avRenderCal(); avShowForm();
+  });
+  el.addEventListener("touchstart",()=>{
+    avDragging=true; avStart=new Date(date); avEnd=new Date(date); avRenderCal();
+  },{passive:true});
+  el.addEventListener("touchend",()=>{
+    if(!avDragging) return; avDragging=false;
+    if(avStart>avEnd)[avStart,avEnd]=[avEnd,avStart];
+    avRenderCal(); avShowForm();
+  });
+  return el;
+}
+
+document.addEventListener("mouseup",()=>{
+  if(!avDragging) return; avDragging=false;
+  if(avStart&&avEnd){
+    if(avStart>avEnd)[avStart,avEnd]=[avEnd,avStart];
+    avRenderCal(); avShowForm();
+  }
+});
+
+function avApplyRange(el,date) {
+  if(!avStart||!avEnd) return;
+  const s=avStart<=avEnd?avStart:avEnd, e=avStart<=avEnd?avEnd:avStart;
+  const t=date.getTime();
+  if(t===s.getTime()&&t===e.getTime()) el.classList.add("sel-d");
+  else if(t===s.getTime()) el.classList.add("rstart");
+  else if(t===e.getTime()) el.classList.add("rend");
+  else if(date>s&&date<e) el.classList.add("range-d");
+}
+
+function avShowForm() {
+  if(!avStart) return;
+  const form=document.getElementById("avForm");
+  form.style.display="block";
+  const s=avStart<=avEnd?avStart:avEnd, e=avStart<=avEnd?avEnd:avStart;
+  document.getElementById("avRangeLabel").textContent =
+    fmtDate(s)===fmtDate(e) ? `Selected: ${fmtDisp(s)}` : `Selected: ${fmtDisp(s)} → ${fmtDisp(e)}`;
+  if(avEditing) {
+    avSelectType(avNorm(avEditing.type));
+  } else {
+    avType="";
+    document.querySelectorAll(".type-btn").forEach(b=>b.classList.remove("active"));
+    document.getElementById("avSubmitBtn").disabled=true;
+  }
+  document.getElementById("avMsg").className="msg";
+}
+
+function avSelectType(t) {
+  avType=t;
+  document.querySelectorAll(".type-btn").forEach(b=>b.classList.toggle("active",b.classList.contains(t)));
+  document.getElementById("avSubmitBtn").disabled=false;
+}
+
+async function avSubmit() {
+  if(!avCoach||!avStart||!avType) return;
+  const s=avStart<=avEnd?avStart:avEnd, e=avStart<=avEnd?avEnd:avStart;
+  const btn=document.getElementById("avSubmitBtn");
+  btn.disabled=true; btn.textContent="Saving...";
+  try {
+    const res = await apiPost({ action:"saveBlackout", payload:{
+      coach:avCoach, startDate:fmtDate(s), endDate:fmtDate(e),
+      type:avType, rowIndex:avEditing?avEditing.rowIndex:null
+    }});
+    if(res.success) {
+      showToast("Saved!");
+      avEditing=null; avStart=null; avEnd=null; avType="";
+      document.querySelectorAll(".type-btn").forEach(b=>b.classList.remove("active"));
+      document.getElementById("avForm").style.display="none";
+      await avLoadSubs(); avRenderCal();
+    }
+  } catch(e) { showToast("Error saving"); }
+  btn.disabled=false; btn.textContent="Save";
+}
+
+async function avLoadSubs() {
+  document.getElementById("avSubList").innerHTML="<div class='loading'>Loading...</div>";
+  avSubs = await apiFetch({action:"getSubmissions", coach:avCoach});
+  avRenderSubs();
+  avRenderCal();
+}
+
+function avRenderSubs() {
+  const list=document.getElementById("avSubList");
+  if(!avSubs.length){list.innerHTML="<div style='color:#888;font-size:13px'>No submissions yet.</div>";return;}
+  const labels={
+    "full day":"🚫 Unavailable","available only during time window":"🌅/🌆 AM or PM only",
+    "available full day":"✅ Available","unavailable":"🚫 Unavailable",
+    "available_am":"🌅 AM only","available_pm":"🌆 PM only","available":"✅ All day"
+  };
+  list.innerHTML=[...avSubs].sort((a,b)=>a.startDate.localeCompare(b.startDate)).map(s=>{
+    const norm=avNorm(s.type), lbl=labels[s.type.toLowerCase()]||s.type;
+    const dates=s.startDate===s.endDate
+      ? fmtDisp(new Date(s.startDate+"T12:00:00"))
+      : `${fmtDisp(new Date(s.startDate+"T12:00:00"))} → ${fmtDisp(new Date(s.endDate+"T12:00:00"))}`;
+    return `<div class="sub-item ${norm}">
+      <div><div class="sub-dates">${dates}</div><div class="sub-type">${lbl}</div></div>
+      <div class="sub-btns">
+        <button class="btn-edit" onclick="avEdit(${s.rowIndex})">Edit</button>
+        <button class="btn-del"  onclick="avDelete(${s.rowIndex})">Delete</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function avEdit(rowIndex) {
+  avEditing=avSubs.find(s=>s.rowIndex===rowIndex); if(!avEditing) return;
+  const s=new Date(avEditing.startDate+"T12:00:00");
+  avYear=s.getFullYear(); avMonth=s.getMonth();
+  avStart=s; avEnd=new Date(avEditing.endDate+"T12:00:00");
+  avRenderCal(); avShowForm();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+async function avDelete(rowIndex) {
+  if(!confirm("Delete this submission?")) return;
+  await apiPost({action:"deleteBlackout", rowIndex});
+  await avLoadSubs();
+  showToast("Deleted");
+}
+
+function avGetSub(date) {
+  const ds=fmtDate(date);
+  return avSubs.find(s=>ds>=s.startDate&&ds<=s.endDate)||null;
+}
+
+function avNorm(type) {
+  const t=(type||"").toLowerCase();
+  if(t==="full day"||t==="unavailable") return "unavailable";
+  if(t==="available_am") return "available_am";
+  if(t==="available_pm") return "available_pm";
+  if(t.includes("window")) return "available_am";
+  return "available";
+}
+
+// ════════════════════════════════════════════════
+// TOTALS
+// ════════════════════════════════════════════════
+let totalsLoaded = false;
+
+async function loadTotals() {
+  totalsLoaded = true;
+  try {
+    const d = await apiFetch({action:"getTotals"});
+    renderTotals(d);
+  } catch(e) {
+    document.getElementById("totalsContainer").innerHTML=
+      "<div class='loading'>Error loading totals.</div>";
+  }
+}
+
+function renderTotals(d) {
+  if(!d.weeks||!d.weeks.length) {
+    document.getElementById("totalsContainer").innerHTML=
+      "<div class='loading'>No data yet.</div>"; return;
+  }
+  let h="";
+  d.weeks.forEach(wk => {
+    h+=`<div class="week-block">
+      <div class="week-block-title">Week of ${wk.label}</div>
+      <table class="totals-table">
+        <tr><th>Coach</th><th>Classes</th><th>OG AM</th><th>OG PM</th><th>Total</th></tr>`;
+    d.coaches.forEach(coach => {
+      const c=(d.counts[wk.key]&&d.counts[wk.key][coach])||{classes:0,ogAM:0,ogPM:0};
+      const total=c.classes+c.ogAM+c.ogPM;
+      if(!total) return;
+      h+=`<tr><td>${coach}</td><td>${c.classes}</td><td>${c.ogAM}</td><td>${c.ogPM}</td><td><strong>${total}</strong></td></tr>`;
+    });
+    h+=`</table></div>`;
+  });
+  document.getElementById("totalsContainer").innerHTML=h;
+}
+
+// ════════════════════════════════════════════════
+// BOOT
+// ════════════════════════════════════════════════
+window.onload = () => {
+  initSchedule();
+  initAvailability();
+};
+</script>
+</body>
+</html>
