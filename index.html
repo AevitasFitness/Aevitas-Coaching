@@ -42,7 +42,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 .tog-rl.off  { background: #f0f0f0; color: #999; border-color: #ddd; }
 .cal-outer { overflow-x: auto; }
 .cal { border: 0.5px solid #ddd; border-radius: 10px; overflow: hidden;
-       background: white; min-width: 700px; }
+       background: white; min-width: 800px; }
 .cal-head { display: grid; background: #f8f8f8; border-bottom: 0.5px solid #ddd; }
 .head-time { padding: 8px 6px; border-right: 0.5px solid #ddd; font-size: 10px; color: #aaa; }
 .head-day { border-right: 0.5px solid #e0e0e0; padding: 6px 4px; text-align: center; }
@@ -53,12 +53,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 .head-loc { font-size: 9px; font-weight: 500; padding: 1px 5px; border-radius: 3px; }
 .head-loc.gd { background: #E6F1FB; color: #185FA5; }
 .head-loc.rl { background: #E1F5EE; color: #0F6E56; }
+.cal-outer { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.cal-row, .cal-head { align-items: stretch; }
+.chip { word-break: break-word; }
 .cal-row { display: grid; border-bottom: 0.5px solid #f0f0f0; }
 .cal-row:last-child { border-bottom: none; }
 .time-cell { padding: 4px 6px; border-right: 0.5px solid #ddd;
              display: flex; align-items: flex-start; padding-top: 5px; }
 .time-lbl { font-size: 10px; color: #bbb; white-space: nowrap; }
-.loc-col { display: flex; flex-direction: column; gap: 2px; min-height: 52px; padding: 3px; }
+.loc-col { display: flex; flex-direction: column; gap: 2px; min-height: 52px;
+           padding: 3px; min-width: 0; overflow: hidden; }
 .chip { border-radius: 5px; padding: 3px 5px; font-size: 10px; line-height: 1.3; cursor: default; }
 .chip-name  { font-weight: 500; font-size: 10px; }
 .chip-coach { font-size: 9px; opacity: 0.85; }
