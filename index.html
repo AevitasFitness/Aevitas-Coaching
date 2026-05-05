@@ -319,7 +319,8 @@ function buildWeekList() {
   });
   schedWeeks = Object.keys(seen).sort();
   var today = fmtDate(new Date());
-  schedWeekIdx = schedWeeks.findIndex(function(w) { return w >= today; });
+  schedWeekIdx = schedWeeks.findIndex(function(w) { return w > today; });
+  schedWeekIdx = schedWeekIdx > 0 ? schedWeekIdx - 1 : 0;
   if (schedWeekIdx < 0) schedWeekIdx = schedWeeks.length - 1;
 }
 
