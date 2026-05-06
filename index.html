@@ -297,12 +297,8 @@ var LOCS = ["Guilderland","Round Lake"];
 async function initSchedule() {
   try {
     var result   = await apiFetch({ action: "getInitialData" });
-    console.log("result keys:", Object.keys(result));
-    console.log("schedule:", result.schedule ? result.schedule.length : "UNDEFINED");
-    console.log("coaches:", result.coaches ? result.coaches.length : "UNDEFINED");
     schedData    = result.schedule || [];
     schedCoaches = result.coaches || [];
-    if (!schedData.length) throw new Error("No schedule data returned");
     buildWeekList();
     renderWeek();
   } catch(e) {
