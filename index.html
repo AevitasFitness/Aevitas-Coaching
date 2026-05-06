@@ -466,7 +466,7 @@ async function initAvailability() {
     var sel = document.getElementById("coachSelect");
     // Wait until schedCoaches is populated from initSchedule
     var attempts = 0;
-    while (!schedCoaches.length && attempts < 20) {
+    while ((!schedCoaches || !schedCoaches.length) && attempts < 20) {
       await new Promise(function(r) { setTimeout(r, 250); });
       attempts++;
     }
