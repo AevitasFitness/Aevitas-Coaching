@@ -175,7 +175,11 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
       <button class="tog tog-rl" id="togRL" onclick="toggleLoc('rl')">Round Lake</button>
     </div>
   </div>
-  <div id="calContainer"><div class="loading">Loading schedule...</div></div>
+  <div id="calContainer"><div class="loading" id="loadingMsg">
+    <div style="font-size:24px;margin-bottom:8px">🏋️</div>
+    <div>Loading schedule...</div>
+    <div style="font-size:11px;color:#bbb;margin-top:6px">Connecting to Google Sheets</div>
+  </div></div>
   <div class="legend" id="legend">
     <div class="li"><div class="ld" style="background:#E6F1FB;border:1px solid #85B7EB"></div>Guilderland</div>
     <div class="li"><div class="ld" style="background:#E1F5EE;border:1px solid #5DCAA5"></div>Round Lake</div>
@@ -292,12 +296,9 @@ var LOCS = ["Guilderland","Round Lake"];
 
 async function initSchedule() {
   try {
-    var results = await Promise.all([
-      apiFetch({ action: "getSchedule" }),
-      apiFetch({ action: "getCoaches" })
-    ]);
-    schedData    = results[0];
-    schedCoaches = results[1];
+    var result   = await apiFetch({ action: "getInitialData" });
+    schedData    = result.schedule;
+    schedCoaches = result.coaches;
     buildWeekList();
     renderWeek();
   } catch(e) {
@@ -462,9 +463,14 @@ var avCoach = "", avSubs = [], avYear = new Date().getFullYear(),
 
 async function initAvailability() {
   try {
-    var coaches = await apiFetch({ action: "getCoaches" });
     var sel = document.getElementById("coachSelect");
-    coaches.forEach(function(n) {
+    // Wait until schedCoaches is populated from initSchedule
+    var attempts = 0;
+    while (!schedCoaches.length && attempts < 20) {
+      await new Promise(function(r) { setTimeout(r, 250); });
+      attempts++;
+    }
+    schedCoaches.forEach(function(n) {
       var o = document.createElement("option");
       o.value = o.textContent = n;
       sel.appendChild(o);
@@ -701,7 +707,8 @@ var totalsLoaded = false;
 async function loadTotals() {
   totalsLoaded = true;
   try {
-    var d = await apiFetch({ action: "getTotals" });
+    // Build totals from already-loaded schedule data — no extra API call needed
+    var d = buildTotalsFromScheduleData();
     renderTotals(d);
   } catch(e) {
     document.getElementById("totalsContainer").innerHTML =
