@@ -707,7 +707,12 @@ var totalsLoaded = false;
 async function loadTotals() {
   totalsLoaded = true;
   try {
-    // Build totals from already-loaded schedule data — no extra API call needed
+    // Wait for schedule data if still loading
+    var attempts = 0;
+    while ((!schedData || !schedData.length) && attempts < 20) {
+      await new Promise(function(r) { setTimeout(r, 300); });
+      attempts++;
+    }
     var d = buildTotalsFromScheduleData();
     renderTotals(d);
   } catch(e) {
