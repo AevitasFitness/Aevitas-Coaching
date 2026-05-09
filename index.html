@@ -464,13 +464,12 @@ var avCoach = "", avSubs = [], avYear = new Date().getFullYear(),
 async function initAvailability() {
   try {
     var sel = document.getElementById("coachSelect");
-    // Wait until schedCoaches is populated from initSchedule
     var attempts = 0;
     while ((!schedCoaches || !schedCoaches.length) && attempts < 20) {
-      await new Promise(function(r) { setTimeout(r, 250); });
+      await new Promise(function(r) { setTimeout(r, 300); });
       attempts++;
     }
-   if (schedCoaches && schedCoaches.length) {
+    if (schedCoaches && schedCoaches.length) {
       schedCoaches.forEach(function(n) {
         var o = document.createElement("option");
         o.value = o.textContent = n;
@@ -709,18 +708,60 @@ var totalsLoaded = false;
 async function loadTotals() {
   totalsLoaded = true;
   try {
-    // Wait for schedule data if still loading
     var attempts = 0;
     while ((!schedData || !schedData.length) && attempts < 20) {
       await new Promise(function(r) { setTimeout(r, 300); });
       attempts++;
     }
+    if (!schedData || !schedData.length) {
+      document.getElementById("totalsContainer").innerHTML =
+        "<div class='loading'>No schedule data loaded yet.</div>";
+      return;
+    }
     var d = buildTotalsFromScheduleData();
     renderTotals(d);
   } catch(e) {
     document.getElementById("totalsContainer").innerHTML =
-      "<div class='loading'>Error loading totals.</div>";
+      "<div class='loading'>Error loading totals: " + e.message + "</div>";
   }
+}
+function buildTotalsFromScheduleData() {
+  var weekMap  = {};
+  var coachSet = new Set();
+  var counts   = {};
+
+  if (!schedData || !schedData.length) {
+    return { weeks: [], coaches: [], counts: {} };
+  }
+
+  schedData.forEach(function(r) {
+    if (!r.coach || r.coach === "OPEN") return;
+    var d    = new Date(r.date + "T12:00:00");
+    var day  = d.getDay();
+    var diff = day === 0 ? -6 : 1 - day;
+    var mon  = new Date(d);
+    mon.setDate(d.getDate() + diff);
+    var wk   = fmtDate(mon);
+    if (!weekMap[wk]) weekMap[wk] = fmtDisp(mon);
+    coachSet.add(r.coach);
+    if (!counts[wk])          counts[wk] = {};
+    if (!counts[wk][r.coach]) counts[wk][r.coach] = { classes:0, ogAM:0, ogPM:0 };
+    var ct = (r.classType || "").toLowerCase();
+    if (ct.indexOf("open gym") >= 0) {
+      if (ct.indexOf("am") >= 0) counts[wk][r.coach].ogAM++;
+      else                       counts[wk][r.coach].ogPM++;
+    } else {
+      counts[wk][r.coach].classes++;
+    }
+  });
+
+  return {
+    weeks:   Object.keys(weekMap).sort().map(function(wk) {
+               return { key: wk, label: weekMap[wk] };
+             }),
+    coaches: Array.from(coachSet).sort(),
+    counts:  counts
+  };
 }
 
 function renderTotals(d) {
