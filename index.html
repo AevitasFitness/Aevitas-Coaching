@@ -464,18 +464,15 @@ var avCoach = "", avSubs = [], avYear = new Date().getFullYear(),
 async function initAvailability() {
   try {
     var sel = document.getElementById("coachSelect");
-    var attempts = 0;
-    while ((!schedCoaches || !schedCoaches.length) && attempts < 20) {
-      await new Promise(function(r) { setTimeout(r, 300); });
-      attempts++;
+    if (!schedCoaches || !schedCoaches.length) {
+      console.error("No coaches loaded");
+      return;
     }
-    if (schedCoaches && schedCoaches.length) {
-      schedCoaches.forEach(function(n) {
-        var o = document.createElement("option");
-        o.value = o.textContent = n;
-        sel.appendChild(o);
-      });
-    }
+    schedCoaches.forEach(function(n) {
+      var o = document.createElement("option");
+      o.value = o.textContent = n;
+      sel.appendChild(o);
+    });
   } catch(e) {
     console.error("Error loading coaches:", e);
   }
@@ -792,8 +789,9 @@ function renderTotals(d) {
 // BOOT
 // ════════════════════════════════════════════════
 window.onload = function() {
-  initSchedule();
-  initAvailability();
+  initSchedule().then(function() {
+    initAvailability();
+  });
 };
 </script>
 </body>
