@@ -187,7 +187,7 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
     <div class="li"><div class="ld" style="background:#EAF3DE;border:1px solid #C0DD97"></div>ViTaFIT</div>
     <div class="li"><div class="ld" style="background:#EEEDFE;border:1px solid #CECBF6"></div>Weightlifting</div>
     <div class="li"><div class="ld" style="background:#FAEEDA;border:1px solid #FAC775"></div>Open Gym</div>
-    <div class="li"><div class="ld" style="background:#FAECE7;border:1px solid #F5C4B3"></div>Spartan</div>
+    <div class="li"><div class="ld" style="background:#FAECE7;border:1px solid #F5C4B3"></div>Hyrox</div>
     <div class="li"><div class="ld" style="background:#FCEBEB;border:1px solid #F09595"></div>OPEN slot</div>
     <div class="li"><div class="ld" style="background:white;outline:1.5px solid #EF9F27;border-radius:3px"></div>Swap</div>
   </div>
@@ -257,7 +257,7 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
     </select>
 
     <label class="field-label">Class Type</label>
-    <input type="text" id="adClassType" placeholder="e.g. CrossFit, Spartan, Hyrox...">
+    <input type="text" id="adClassType" placeholder="e.g. CrossFit, ViTaFIT, Hyrox...">
 
     <label class="field-label">Coach</label>
     <select id="adCoach">
@@ -526,7 +526,7 @@ function getChipClass(ct, loc) {
   if (c.indexOf("weightlifting") >= 0 || c === "wl") return "wl-chip";
   if (c.indexOf("vitafit") >= 0 || c === "vf")       return "vf-chip";
   if (c.indexOf("open gym") >= 0)                    return "og-chip";
-  if (c.indexOf("spartan") >= 0)                     return "sp-chip";
+  if (c.indexOf("hyrox") >= 0)                     return "sp-chip";
   return loc === "Guilderland" ? "gd-chip" : "rl-chip";
 }
 
