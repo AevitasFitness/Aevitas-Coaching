@@ -159,6 +159,7 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
     <button class="nav-tab active" onclick="showPage('schedule',this)">Schedule</button>
     <button class="nav-tab" onclick="showPage('availability',this)">Availability</button>
     <button class="nav-tab" onclick="showPage('totals',this)">Totals</button>
+    <button class="nav-tab" onclick="showPage('admin',this)">⚙️ Admin</button>
   </div>
 </nav>
 
@@ -237,6 +238,48 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
 
 <div class="toast" id="toast"></div>
 
+<!-- ADMIN -->
+<div class="page" id="page-admin">
+  <div class="card">
+    <label class="field-label" style="font-size:15px;margin-bottom:14px">Add a Class to the Schedule</label>
+
+    <label class="field-label">Date</label>
+    <input type="date" id="adDate">
+
+    <label class="field-label">Time</label>
+    <input type="time" id="adTime">
+
+    <label class="field-label">Location</label>
+    <select id="adLocation">
+      <option value="">— Select location —</option>
+      <option value="Guilderland">Guilderland</option>
+      <option value="Round Lake">Round Lake</option>
+    </select>
+
+    <label class="field-label">Class Type</label>
+    <input type="text" id="adClassType" placeholder="e.g. CrossFit, Spartan, Hyrox...">
+
+    <label class="field-label">Coach</label>
+    <select id="adCoach">
+      <option value="">— Select coach —</option>
+    </select>
+
+    <div id="adMsg" class="msg"></div>
+
+    <button class="btn btn-primary" onclick="submitAddClass()"
+            style="width:100%;padding:12px;font-size:14px;font-weight:600;">
+      Add to Schedule
+    </button>
+  </div>
+
+  <div class="card">
+    <label class="field-label" style="margin-bottom:10px">Recently Added Classes</label>
+    <div id="adRecentList"><div style="color:#aaa;font-size:13px">
+      Added classes will appear here after saving.
+    </div></div>
+  </div>
+</div>
+
 <script>
 // ── IMPORTANT: Replace with your Apps Script /exec URL ──────────
 const API = "https://script.google.com/macros/s/AKfycbzFdUbF7vB3yHDdy1pqZG6Sqvwx5_8j9TMGCWqi7kYjYOtrQO8-yvzOn8EfbtzgmTXteg/exec";
@@ -278,12 +321,18 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove("show"), 2500);
 }
 
+var adminInitialized = false;
+
 function showPage(id, btn) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
   document.getElementById("page-" + id).classList.add("active");
   if (btn) btn.classList.add("active");
   if (id === "totals" && !totalsLoaded) loadTotals();
+  if (id === "admin" && !adminInitialized) {
+    adminInitialized = true;
+    initAdmin();
+  }
 }
 
 // ════════════════════════════════════════════════
@@ -415,11 +464,13 @@ function renderWeek() {
           h += "<div class='chip-name'>" + slot.classType + "</div>";
           h += "<div class='chip-coach'>" + slot.coach + "</div>";
           if (slot.isSwap) h += "<div class='chip-swap'>&#8596; SWAP</div>";
-          h += "<select class='edit-sel' onchange='doUpdateCoach(" + slot.rowIndex + ",this.value,this)'>";
-          h += "<option value=''>— reassign —</option><option value='OPEN'>OPEN</option>";
+          h += "<select class='edit-sel' onchange='handleSlotAction(" + slot.rowIndex + ",this.value,this)'>";
+          h += "<option value=''>— reassign —</option>";
+          h += "<option value='OPEN'>OPEN</option>";
           schedCoaches.forEach(function(c) {
             h += "<option value='" + c + "'" + (c === slot.coach ? " selected" : "") + ">" + c + "</option>";
           });
+          h += "<option value='__delete__'>🗑 Delete class</option>";
           h += "</select></div>";
         });
         h += "</div>";
@@ -442,6 +493,31 @@ async function doUpdateCoach(rowIndex, newCoach, sel) {
   } catch(e) {
     showToast("Error saving");
     sel.value = "";
+  }
+}
+
+async function handleSlotAction(rowIndex, value, sel) {
+  if (!value) return;
+  if (value === "__delete__") {
+    if (!confirm("Delete this class from the schedule permanently?")) {
+      sel.value = ""; return;
+    }
+    try {
+      await apiPost({ action: "deleteClass", rowIndex: rowIndex });
+      // Remove from local schedData
+      schedData = schedData.filter(function(r) { return r.rowIndex !== rowIndex; });
+      // Fix rowIndex for all rows after the deleted one
+      schedData.forEach(function(r) {
+        if (r.rowIndex > rowIndex) r.rowIndex--;
+      });
+      showToast("Class deleted");
+      renderWeek();
+    } catch(e) {
+      showToast("Error deleting");
+      sel.value = "";
+    }
+  } else {
+    doUpdateCoach(rowIndex, value, sel);
   }
 }
 
@@ -783,6 +859,114 @@ function renderTotals(d) {
     h += "</table></div>";
   });
   document.getElementById("totalsContainer").innerHTML = h;
+}
+// ════════════════════════════════════════════════
+// ADMIN
+// ════════════════════════════════════════════════
+var adRecentClasses = [];
+var adAdminUnlocked = true; // set to false and add PIN check here later if needed
+
+function initAdmin() {
+  // Populate coach dropdown from already-loaded schedCoaches
+  var sel = document.getElementById("adCoach");
+  schedCoaches.forEach(function(n) {
+    var o = document.createElement("option");
+    o.value = o.textContent = n;
+    sel.appendChild(o);
+  });
+
+  // Default date to today
+  var today = new Date();
+  var yyyy  = today.getFullYear();
+  var mm    = String(today.getMonth()+1).padStart(2,"0");
+  var dd    = String(today.getDate()).padStart(2,"0");
+  document.getElementById("adDate").value = yyyy + "-" + mm + "-" + dd;
+}
+
+async function submitAddClass() {
+  var date      = document.getElementById("adDate").value;
+  var time      = document.getElementById("adTime").value;
+  var location  = document.getElementById("adLocation").value;
+  var classType = document.getElementById("adClassType").value.trim();
+  var coach     = document.getElementById("adCoach").value;
+  var msgEl     = document.getElementById("adMsg");
+
+  msgEl.className = "msg";
+
+  if (!date || !time || !location || !classType || !coach) {
+    msgEl.textContent = "Please fill in all fields.";
+    msgEl.className   = "msg error";
+    return;
+  }
+
+  var btn = document.querySelector("#page-admin .btn-primary");
+  btn.disabled    = true;
+  btn.textContent = "Saving...";
+
+  try {
+    var res = await apiPost({
+      action:  "addClass",
+      payload: { date, time, location, classType, coach }
+    });
+
+    if (res.success) {
+      msgEl.textContent = "✅ Class added successfully!";
+      msgEl.className   = "msg success";
+
+      // Add to recent list
+      adRecentClasses.unshift({ date, time, location, classType, coach });
+      adRenderRecent();
+
+      // Add to local schedData so calendar reflects it immediately
+      var timeDisp = new Date("1970-01-01T" + time + ":00")
+        .toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
+      var timeFmt  = time.replace(":", "");
+      if (timeFmt.length === 4) timeFmt = "0" + timeFmt;
+      schedData.push({
+        rowIndex:    999999,
+        date:        date,
+        day:         new Date(date+"T12:00:00").toLocaleDateString("en-US",{weekday:"long"}),
+        time:        time,
+        timeDisplay: timeDisp,
+        location:    location,
+        classType:   classType,
+        coach:       coach,
+        isSwap:      false
+      });
+
+      // Clear form
+      document.getElementById("adTime").value      = "";
+      document.getElementById("adLocation").value  = "";
+      document.getElementById("adClassType").value = "";
+      document.getElementById("adCoach").value     = "";
+
+      showToast("Class added!");
+    } else {
+      msgEl.textContent = "Error: " + (res.error || "Unknown error");
+      msgEl.className   = "msg error";
+    }
+  } catch(e) {
+    msgEl.textContent = "Error: " + e.message;
+    msgEl.className   = "msg error";
+  }
+
+  btn.disabled    = false;
+  btn.textContent = "Add to Schedule";
+}
+
+function adRenderRecent() {
+  var list = document.getElementById("adRecentList");
+  if (!adRecentClasses.length) {
+    list.innerHTML = "<div style='color:#aaa;font-size:13px'>No classes added yet.</div>";
+    return;
+  }
+  list.innerHTML = adRecentClasses.map(function(c) {
+    return "<div class='sub-item available' style='border-color:#4a86e8'>" +
+      "<div>" +
+      "<div class='sub-dates'>" + c.date + " at " + c.time + "</div>" +
+      "<div class='sub-type'>" + c.classType + " · " + c.location + " · " + c.coach + "</div>" +
+      "</div></div>";
+  }).join("");
 }
 
 // ════════════════════════════════════════════════
