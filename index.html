@@ -99,10 +99,10 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
 .mday.range-d { background: #c5d8fb; }
 .mday.rstart  { background: #4a86e8; color: white; }
 .mday.rend    { background: #4a86e8; color: white; }
-.mday.has-unavailable  { border-color: #e53935; }
-.mday.has-available_am { border-color: #43a047; }
-.mday.has-available_pm { border-color: #fb8c00; }
-.mday.has-available    { border-color: #9e9e9e; }
+.mday.has-unavailable  { border-color: #e53935; background: #fff5f5; }
+.mday.has-available_am { border-color: #1a73e8; background: #f0f6ff; }
+.mday.has-available_pm { border-color: #f9ab00; background: #fffde7; }
+.mday.has-available    { border-color: #43a047; background: #f1f8f1; }
 .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
 .type-btn { padding: 10px; border: 2px solid #ddd; border-radius: 7px;
             background: white; cursor: pointer; font-size: 13px; font-weight: 500;
@@ -110,18 +110,18 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
 .type-btn:hover { border-color: #4a86e8; }
 .type-btn.active { color: white; border-color: transparent; }
 .type-btn.unavailable.active  { background: #e53935; }
-.type-btn.available_am.active { background: #43a047; }
-.type-btn.available_pm.active { background: #fb8c00; }
-.type-btn.available.active    { background: #9e9e9e; }
+.type-btn.available_am.active { background: #1a73e8; }
+.type-btn.available_pm.active { background: #f9ab00; }
+.type-btn.available.active    { background: #43a047; }
 .sel-range { font-size: 12px; color: #666; padding: 7px 10px;
              background: #f0f4ff; border-radius: 6px; margin-bottom: 10px; }
 .sub-item { display: flex; align-items: center; justify-content: space-between;
             padding: 9px 11px; border-radius: 7px; margin-bottom: 7px;
             border-left: 4px solid #ddd; background: #fafafa; }
 .sub-item.unavailable  { border-color: #e53935; }
-.sub-item.available_am { border-color: #43a047; }
-.sub-item.available_pm { border-color: #fb8c00; }
-.sub-item.available    { border-color: #9e9e9e; }
+.sub-item.available_am { border-color: #1a73e8; }
+.sub-item.available_pm { border-color: #f9ab00; }
+.sub-item.available    { border-color: #43a047; }
 .sub-dates { font-weight: 500; font-size: 13px; }
 .sub-type  { color: #888; font-size: 11px; margin-top: 2px; }
 .sub-btns  { display: flex; gap: 6px; flex-shrink: 0; }
@@ -692,7 +692,10 @@ async function avSubmit() {
       avEditing = null; avStart = null; avEnd = null; avType = "";
       document.querySelectorAll(".type-btn").forEach(function(b) { b.classList.remove("active"); });
       document.getElementById("avForm").style.display = "none";
-      await avLoadSubs(); avRenderCal();
+      // ✅ Re-fetch from server to guarantee calendar reflects actual saved state
+      await avLoadSubs();
+    } else {
+      showToast("Error saving");
     }
   } catch(err) { showToast("Error saving"); }
   btn.disabled = false; btn.textContent = "Save";
@@ -702,9 +705,11 @@ async function avLoadSubs() {
   document.getElementById("avSubList").innerHTML = "<div class='loading'>Loading...</div>";
   try {
     avSubs = await apiFetch({ action: "getSubmissions", coach: avCoach });
-    avRenderSubs(); avRenderCal();
+    avRenderSubs();
+    avRenderCal(); // ✅ always re-render after fresh fetch
   } catch(e) {
-    document.getElementById("avSubList").innerHTML = "<div class='loading'>Error loading.</div>";
+    document.getElementById("avSubList").innerHTML =
+      "<div style='color:#c62828;font-size:13px'>Error loading submissions.</div>";
   }
 }
 
@@ -754,9 +759,15 @@ function avEdit(rowIndex) {
 
 async function avDelete(rowIndex) {
   if (!confirm("Delete this submission?")) return;
-  await apiPost({ action: "deleteBlackout", rowIndex: rowIndex });
-  await avLoadSubs();
-  showToast("Deleted");
+  try {
+    await apiPost({ action: "deleteBlackout", rowIndex: rowIndex });
+    avEditing = null; avStart = null; avEnd = null;
+    document.getElementById("avForm").style.display = "none";
+    await avLoadSubs();
+    showToast("Deleted");
+  } catch(e) {
+    showToast("Error deleting");
+  }
 }
 
 function avGetSub(date) {
