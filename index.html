@@ -606,7 +606,7 @@ function avMakeDayEl(date, other) {
   var today = new Date(); today.setHours(0,0,0,0);
   if (date.getTime() === today.getTime()) el.classList.add("today-d");
   var sub = avGetSub(date);
-  if (sub) el.classList.add("has-" + avNorm(sub.type));
+  if (sub) el.classList.add("has-" + avNorm(sub.type, sub.startTime, sub.endTime));
   avApplyRange(el, date);
   el.addEventListener("mousedown", function(e) {
     avDragging = true; avStart = new Date(date); avEnd = new Date(date);
@@ -659,7 +659,7 @@ function avShowForm() {
     fmtDate(s) === fmtDate(e) ? "Selected: " + fmtDisp(s) :
                                  "Selected: " + fmtDisp(s) + " → " + fmtDisp(e);
   if (avEditing) {
-    avSelectType(avNorm(avEditing.type));
+    avSelectType(avNorm(avEditing.type, avEditing.startTime, avEditing.endTime));
   } else {
     avType = "";
     document.querySelectorAll(".type-btn").forEach(function(b) { b.classList.remove("active"); });
@@ -731,7 +731,7 @@ function avRenderSubs() {
   list.innerHTML = avSubs.slice().sort(function(a,b) {
     return a.startDate.localeCompare(b.startDate);
   }).map(function(s) {
-    var norm  = avNorm(s.type);
+    var norm  = avNorm(s.type, s.startTime, s.endTime);
     var lbl   = labels[s.type.toLowerCase()] || s.type;
     var dates = s.startDate === s.endDate
       ? fmtDisp(new Date(s.startDate + "T12:00:00"))
@@ -775,12 +775,21 @@ function avGetSub(date) {
   return avSubs.find(function(s) { return ds >= s.startDate && ds <= s.endDate; }) || null;
 }
 
-function avNorm(type) {
+function avNorm(type, startTime, endTime) {
   var t = (type || "").toLowerCase();
   if (t === "full day" || t === "unavailable") return "unavailable";
   if (t === "available_am") return "available_am";
   if (t === "available_pm") return "available_pm";
-  if (t.indexOf("window") >= 0) return "available_am";
+  if (t === "available full day" || t === "available") return "available";
+
+  // For "Available Only During Time Window" use the actual times to distinguish
+  if (t.indexOf("window") >= 0 || t.indexOf("available only") >= 0) {
+    // AM window ends at or before 12:00, PM window starts at or after 12:00
+    if (endTime && endTime <= "12:00") return "available_am";
+    if (startTime && startTime >= "12:00") return "available_pm";
+    // fallback if times are ambiguous
+    return "available_am";
+  }
   return "available";
 }
 
