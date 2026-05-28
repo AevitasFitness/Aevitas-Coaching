@@ -210,6 +210,20 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
       </div>
       <div class="mini-grid" id="avGrid"></div>
       <p class="hint">Click a day or drag to select a range.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;">
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#555;">
+          <div style="width:14px;height:14px;border-radius:3px;background:#f1f8f1;border:2px solid #43a047;flex-shrink:0"></div>Available all day
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#555;">
+          <div style="width:14px;height:14px;border-radius:3px;background:#fff5f5;border:2px solid #e53935;flex-shrink:0"></div>Not available
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#555;">
+          <div style="width:14px;height:14px;border-radius:3px;background:#f0f6ff;border:2px solid #1a73e8;flex-shrink:0"></div>Available AM only
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#555;">
+          <div style="width:14px;height:14px;border-radius:3px;background:#fffde7;border:2px solid #f9ab00;flex-shrink:0"></div>Available PM only
+        </div>
+      </div>
     </div>
     <div class="card" id="avForm" style="display:none">
       <div class="sel-range" id="avRangeLabel"></div>
