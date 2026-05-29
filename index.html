@@ -185,10 +185,12 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
                   font-size: 12px; color: #333; }
 .rpt-total-chip span { font-weight: 600; color: #4a86e8; }
 @media print {
-  .nav, .toolbar { display: none !important; }
-  .page { display: block !important; padding: 0 !important; }
+  .nav, .toolbar, #page-schedule, #page-availability, #page-admin { display: none !important; }
+  .page { display: none !important; }
+  #page-totals { display: block !important; padding: 0 !important; }
   .rpt-wrap { break-inside: avoid; margin-bottom: 24px;
               border: 1px solid #ccc !important; }
+}
 }
 </style>
 </head>
