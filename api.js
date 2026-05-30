@@ -1,50 +1,64 @@
-export async function onRequest(context) {
-  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYfF_mHzImT348OVH8qwvR8M5kfEqygA4wASb-GAQZLO_lzzwprwUf-OQBJoWxaxZJog/exec";
+addEventListener('fetch', event => {
+  event.respondWith(handleRequest(event.request))
+})
 
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Content-Type": "application/json"
-  };
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYfF_mHzImT348OVH8qwvR8M5kfEqygA4wASb-GAQZLO_lzzwprwUf-OQBJoWxaxZJog/exec";
 
-  const request = context.request;
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Content-Type": "application/json"
+};
 
+async function handleRequest(request) {
   if (request.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const url = new URL(request.url);
+  const params = url.searchParams.toString();
+
   try {
-    const url = new URL(request.url);
     let response;
 
-    const browserHeaders = {
-      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      "Accept-Language": "en-US,en;q=0.5"
-    };
-
     if (request.method === "GET") {
-      const targetUrl = APPS_SCRIPT_URL + "?" + url.searchParams.toString();
-      response = await fetch(targetUrl, {
-        redirect: "follow",
-        headers: browserHeaders
-      });
+      let currentUrl = APPS_SCRIPT_URL + (params ? "?" + params : "");
+      let attempts = 0;
+      while (attempts < 5) {
+        response = await fetch(currentUrl, { redirect: "manual" });
+        if (response.status >= 300 && response.status < 400) {
+          currentUrl = response.headers.get("location");
+          attempts++;
+        } else {
+          break;
+        }
+      }
     } else if (request.method === "POST") {
       const body = await request.text();
-      response = await fetch(APPS_SCRIPT_URL, {
-        method: "POST",
-        headers: { ...browserHeaders, "Content-Type": "text/plain" },
-        body: body,
-        redirect: "follow"
-      });
+      let currentUrl = APPS_SCRIPT_URL;
+      let attempts = 0;
+      while (attempts < 5) {
+        response = await fetch(currentUrl, {
+          method: attempts === 0 ? "POST" : "GET",
+          headers: { "Content-Type": "text/plain" },
+          body: attempts === 0 ? body : undefined,
+          redirect: "manual"
+        });
+        if (response.status >= 300 && response.status < 400) {
+          currentUrl = response.headers.get("location");
+          attempts++;
+        } else {
+          break;
+        }
+      }
     }
 
     const text = await response.text();
 
     if (text.trim().startsWith("<")) {
       return new Response(
-        JSON.stringify({ error: "Apps Script returned HTML - check deployment permissions" }),
+        JSON.stringify({ error: "Apps Script returned HTML" }),
         { status: 502, headers: corsHeaders }
       );
     }
