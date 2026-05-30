@@ -417,7 +417,7 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
 
 <script>
 // ── IMPORTANT: Replace with your Apps Script /exec URL ──────────
-const API = "https://script.google.com/macros/s/AKfycbyH4cDx0ls_R_mHRVC16pFIUsnm1FuRfn9cghVP7tse8JARyJyPZZ-FZfFnPT6JEMLlWw/exec";
+const API = "/api";
 
 // ── Helpers ──────────────────────────────────────────────────────
 async function apiFetch(params) {
@@ -485,14 +485,36 @@ var otherHours  = [];
 
 async function initSchedule() {
   try {
-    var result   = await apiFetch({ action: "getInitialData" });
-    schedData    = result.schedule || [];
-    schedCoaches = result.coaches || [];
-    ptSessions   = result.ptSessions  || [];
-    otherHours   = result.otherHours  || [];
+    console.log("Step 1: fetching schedule...");
+    schedData = await apiFetch({ action: "getSchedule" });
+    console.log("Step 1 done:", schedData.length, "rows");
+
+    console.log("Step 2: fetching coaches...");
+    schedCoaches = await apiFetch({ action: "getCoaches" });
+    console.log("Step 2 done:", schedCoaches.length, "coaches");
+
     buildWeekList();
     renderWeek();
+
+    console.log("Step 3: fetching PT sessions...");
+    ptSessions = await apiFetch({ action: "getPTSessions" });
+    console.log("Step 3 done:", ptSessions.length, "sessions");
+
+    console.log("Step 4: fetching other hours...");
+    otherHours = await apiFetch({ action: "getOtherHours" });
+    console.log("Step 4 done:", otherHours.length, "entries");
+
+    console.log("Step 5: fetching availability data...");
+    var avResult      = await apiFetch({ action: "getAvailabilityData" });
+    schedBlackouts    = avResult.blackouts    || [];
+    schedAvailability = avResult.availability || { header: [], rows: [] };
+    schedCertMap      = avResult.certMap      || {};
+    console.log("Step 5 done:", schedBlackouts.length, "blackouts");
+
+    renderWeek();
+
   } catch(e) {
+    console.log("FAILED:", e.message);
     document.getElementById("calContainer").innerHTML =
       "<div class='loading'>Error: " + e.message + "</div>";
   }
