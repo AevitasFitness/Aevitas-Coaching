@@ -40,11 +40,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 .tog-gd.off  { background: #f0f0f0; color: #999; border-color: #ddd; }
 .tog-rl      { background: #E1F5EE; color: #0F6E56; border-color: #5DCAA5; }
 .tog-rl.off  { background: #f0f0f0; color: #999; border-color: #ddd; }
-.cal-outer { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.cal-outer { overflow-x: auto; }
 .cal { border: 0.5px solid #ddd; border-radius: 10px; overflow: hidden;
        background: white; min-width: 800px; }
 .cal-head { display: grid; background: #f8f8f8; border-bottom: 0.5px solid #ddd; }
-.cal-row, .cal-head { align-items: stretch; }
 .head-time { padding: 8px 6px; border-right: 0.5px solid #ddd; font-size: 10px; color: #aaa; }
 .head-day { border-right: 0.5px solid #e0e0e0; padding: 6px 4px; text-align: center; }
 .head-day:last-child { border-right: none; }
@@ -54,6 +53,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 .head-loc { font-size: 9px; font-weight: 500; padding: 1px 5px; border-radius: 3px; }
 .head-loc.gd { background: #E6F1FB; color: #185FA5; }
 .head-loc.rl { background: #E1F5EE; color: #0F6E56; }
+.cal-outer { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.cal-row, .cal-head { align-items: stretch; }
+.chip { word-break: break-word; }
 .cal-row { display: grid; border-bottom: 0.5px solid #f0f0f0; }
 .cal-row:last-child { border-bottom: none; }
 .time-cell { padding: 4px 6px; border-right: 0.5px solid #ddd;
@@ -61,8 +63,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 .time-lbl { font-size: 10px; color: #bbb; white-space: nowrap; }
 .loc-col { display: flex; flex-direction: column; gap: 2px; min-height: 52px;
            padding: 3px; min-width: 0; overflow: hidden; }
-.chip { border-radius: 5px; padding: 3px 5px; font-size: 10px;
-        line-height: 1.3; cursor: default; word-break: break-word; }
+.chip { border-radius: 5px; padding: 3px 5px; font-size: 10px; line-height: 1.3; cursor: default; }
 .chip-name  { font-weight: 500; font-size: 10px; }
 .chip-coach { font-size: 9px; opacity: 0.85; }
 .chip-swap  { font-size: 8px; font-weight: 500; color: #854F0B; margin-top: 1px; }
@@ -71,7 +72,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 .wl-chip   { background: #EEEDFE; color: #3C3489; }
 .vf-chip   { background: #EAF3DE; color: #27500A; }
 .og-chip   { background: #FAEEDA; color: #633806; }
-.hx-chip   { background: #FCE8F3; color: #8C1A5A; }
+.sp-chip   { background: #FAECE7; color: #993C1D; }
 .open-chip { background: #FCEBEB; color: #A32D2D; border: 1px solid #F09595; }
 .swap-chip { outline: 1.5px solid #EF9F27; }
 .edit-sel  { width: 100%; font-size: 9px; border: none; background: transparent;
@@ -132,40 +133,15 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
        font-size: 13px; text-align: center; display: none; }
 .msg.success { background: #e8f5e9; color: #2e7d32; display: block; }
 .msg.error   { background: #fce8e6; color: #c62828; display: block; }
-.rpt-wrap { background: white; border-radius: 10px;
-            border: 0.5px solid #e0e0e0; overflow: hidden; margin-bottom: 16px; }
-.rpt-title { background: #4a86e8; color: white; padding: 10px 16px;
-             font-weight: 600; font-size: 15px;
-             display: flex; justify-content: space-between; align-items: center; }
-.rpt-grid { display: grid; grid-template-columns: repeat(7, 1fr);
-            gap: 0; border-top: 0.5px solid #e0e0e0; }
-.rpt-dname { text-align: center; font-size: 10px; font-weight: 500;
-             color: #888; padding: 5px 2px;
-             background: #f8f8f8; border-bottom: 0.5px solid #e0e0e0;
-             border-right: 0.5px solid #f0f0f0; }
-.rpt-dname:last-child { border-right: none; }
-.rpt-day { padding: 5px; min-height: 70px; border-bottom: 0.5px solid #f0f0f0;
-           border-right: 0.5px solid #f0f0f0; vertical-align: top; }
-.rpt-day:nth-child(7n) { border-right: none; }
-.rpt-day.other { background: #fafafa; }
-.rpt-day.today-r { background: #f0f6ff; }
-.rpt-daynum { font-size: 11px; font-weight: 500; color: #999; margin-bottom: 3px; }
-.rpt-daynum.has-classes { color: #333; }
-.rpt-class { font-size: 10px; line-height: 1.4; color: #444;
-             background: #f0f4ff; border-radius: 3px;
-             padding: 1px 4px; margin-bottom: 2px; }
-.rpt-class.gd { background: #E6F1FB; color: #0C447C; }
-.rpt-class.rl { background: #E1F5EE; color: #085041; }
-.rpt-totals { padding: 12px 16px; background: #f8f8f8;
-              border-top: 1px solid #e0e0e0; }
-.rpt-totals-title { font-size: 11px; font-weight: 600;
-                    color: #888; text-transform: uppercase;
-                    letter-spacing: 0.05em; margin-bottom: 8px; }
-.rpt-totals-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-.rpt-total-chip { background: white; border: 0.5px solid #ddd;
-                  border-radius: 6px; padding: 5px 10px;
-                  font-size: 12px; color: #333; }
-.rpt-total-chip span { font-weight: 600; color: #4a86e8; }
+.totals-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.totals-table th { padding: 6px 10px; text-align: left;
+                   background: #f0f6ff; border-bottom: 0.5px solid #e0e0e0; font-weight: 500; }
+.totals-table td { padding: 5px 10px; border-bottom: 0.5px solid #f0f0f0; }
+.totals-table tr:nth-child(even) td { background: #fafafa; }
+.week-block { background: white; border-radius: 10px; border: 0.5px solid #e0e0e0;
+              overflow: hidden; margin-bottom: 14px; }
+.week-block-title { background: #4a86e8; color: white; padding: 8px 14px;
+                    font-weight: 500; font-size: 14px; }
 .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
          background: #333; color: white; padding: 8px 18px; border-radius: 8px;
          font-size: 13px; opacity: 0; transition: opacity 0.3s;
@@ -173,12 +149,6 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
 .toast.show { opacity: 1; }
 .loading { text-align: center; padding: 40px; color: #888; font-size: 14px; }
 .hint { font-size: 11px; color: #aaa; margin-top: 6px; }
-@media print {
-  .nav, .toolbar, #page-schedule, #page-availability, #page-admin { display: none !important; }
-  .page { display: none !important; }
-  #page-totals { display: block !important; padding: 0 !important; }
-  .rpt-wrap { break-inside: avoid; margin-bottom: 24px; border: 1px solid #ccc !important; }
-}
 </style>
 </head>
 <body>
@@ -206,18 +176,18 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
       <button class="tog tog-rl" id="togRL" onclick="toggleLoc('rl')">Round Lake</button>
     </div>
   </div>
-  <div id="calContainer"><div class="loading">
+  <div id="calContainer"><div class="loading" id="loadingMsg">
     <div style="font-size:24px;margin-bottom:8px">🏋️</div>
     <div>Loading schedule...</div>
     <div style="font-size:11px;color:#bbb;margin-top:6px">Connecting to Google Sheets</div>
   </div></div>
-  <div class="legend">
+  <div class="legend" id="legend">
     <div class="li"><div class="ld" style="background:#E6F1FB;border:1px solid #85B7EB"></div>Guilderland</div>
     <div class="li"><div class="ld" style="background:#E1F5EE;border:1px solid #5DCAA5"></div>Round Lake</div>
     <div class="li"><div class="ld" style="background:#EAF3DE;border:1px solid #C0DD97"></div>ViTaFIT</div>
     <div class="li"><div class="ld" style="background:#EEEDFE;border:1px solid #CECBF6"></div>Weightlifting</div>
     <div class="li"><div class="ld" style="background:#FAEEDA;border:1px solid #FAC775"></div>Open Gym</div>
-    <div class="li"><div class="ld" style="background:#FCE8F3;border:1px solid #F0A8D4"></div>Hyrox</div>
+    <div class="li"><div class="ld" style="background:#FAECE7;border:1px solid #F5C4B3"></div>Hyrox</div>
     <div class="li"><div class="ld" style="background:#FCEBEB;border:1px solid #F09595"></div>OPEN slot</div>
     <div class="li"><div class="ld" style="background:white;outline:1.5px solid #EF9F27;border-radius:3px"></div>Swap</div>
   </div>
@@ -277,54 +247,58 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
 
 <!-- TOTALS -->
 <div class="page" id="page-totals">
-  <div class="toolbar" style="flex-wrap:wrap;gap:8px;">
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <select id="rptCoach" onchange="renderReport()" style="width:160px;margin:0;padding:6px 10px;font-size:13px;">
-        <option value="__all__">All Coaches</option>
-      </select>
-      <select id="rptMonth" onchange="renderReport()" style="width:160px;margin:0;padding:6px 10px;font-size:13px;"></select>
-    </div>
-    <button class="btn" onclick="printReport()" style="margin-left:auto;">🖨 Print</button>
-  </div>
-  <div id="rptContainer"><div class="loading">Loading...</div></div>
+  <div id="totalsContainer"><div class="loading">Loading totals...</div></div>
 </div>
+
+<div class="toast" id="toast"></div>
 
 <!-- ADMIN -->
 <div class="page" id="page-admin">
   <div class="card">
     <label class="field-label" style="font-size:15px;margin-bottom:14px">Add a Class to the Schedule</label>
+
     <label class="field-label">Date</label>
     <input type="date" id="adDate">
+
     <label class="field-label">Time</label>
     <input type="time" id="adTime">
+
     <label class="field-label">Location</label>
     <select id="adLocation">
       <option value="">— Select location —</option>
       <option value="Guilderland">Guilderland</option>
       <option value="Round Lake">Round Lake</option>
     </select>
+
     <label class="field-label">Class Type</label>
     <input type="text" id="adClassType" placeholder="e.g. CrossFit, ViTaFIT, Hyrox...">
+
     <label class="field-label">Coach</label>
     <select id="adCoach">
       <option value="">— Select coach —</option>
     </select>
+
     <div id="adMsg" class="msg"></div>
+
     <button class="btn btn-primary" onclick="submitAddClass()"
             style="width:100%;padding:12px;font-size:14px;font-weight:600;">
       Add to Schedule
     </button>
   </div>
+
   <div class="card">
     <label class="field-label" style="margin-bottom:10px">Recently Added Classes</label>
-    <div id="adRecentList"><div style="color:#aaa;font-size:13px">Added classes will appear here after saving.</div></div>
+    <div id="adRecentList"><div style="color:#aaa;font-size:13px">
+      Added classes will appear here after saving.
+    </div></div>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
-
 <script>
-const API = "https://script.google.com/macros/s/AKfycbyH4cDx0ls_R_mHRVC16pFIUsnm1FuRfn9cghVP7tse8JARyJyPZZ-FZfFnPT6JEMLlWw/exec";
+// ── IMPORTANT: Replace with your Apps Script /exec URL ──────────
+const API = "https://script.google.com/macros/s/AKfycbzFdUbF7vB3yHDdy1pqZG6Sqvwx5_8j9TMGCWqi7kYjYOtrQO8-yvzOn8EfbtzgmTXteg/exec";
+
+// ── Helpers ──────────────────────────────────────────────────────
 async function apiFetch(params) {
   const url = API + "?" + new URLSearchParams(params).toString();
   const r   = await fetch(url, { redirect: "follow", mode: "cors" });
@@ -349,9 +323,11 @@ function fmtDate(d) {
     String(d.getMonth()+1).padStart(2,"0") + "-" +
     String(d.getDate()).padStart(2,"0");
 }
+
 function fmtDisp(d) {
   return d.toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" });
 }
+
 function showToast(msg) {
   const t = document.getElementById("toast");
   t.textContent = msg;
@@ -360,13 +336,17 @@ function showToast(msg) {
 }
 
 var adminInitialized = false;
+
 function showPage(id, btn) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
   document.getElementById("page-" + id).classList.add("active");
   if (btn) btn.classList.add("active");
   if (id === "totals" && !totalsLoaded) loadTotals();
-  if (id === "admin" && !adminInitialized) { adminInitialized = true; initAdmin(); }
+  if (id === "admin" && !adminInitialized) {
+    adminInitialized = true;
+    initAdmin();
+  }
 }
 
 // ════════════════════════════════════════════════
@@ -374,7 +354,6 @@ function showPage(id, btn) {
 // ════════════════════════════════════════════════
 var schedData = [], schedCoaches = [], schedWeeks = [], schedWeekIdx = 0;
 var gdOn = true, rlOn = true;
-var schedBlackouts = [], schedAvailability = { header: [], rows: [] }, schedCertMap = {};
 var DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 var LOCS = ["Guilderland","Round Lake"];
 
@@ -382,14 +361,8 @@ async function initSchedule() {
   try {
     var result   = await apiFetch({ action: "getInitialData" });
     schedData    = result.schedule || [];
-    schedCoaches = result.coaches  || [];
+    schedCoaches = result.coaches || [];
     buildWeekList();
-    renderWeek();
-
-    var avResult      = await apiFetch({ action: "getAvailabilityData" });
-    schedBlackouts    = avResult.blackouts    || [];
-    schedAvailability = avResult.availability || { header: [], rows: [] };
-    schedCertMap      = avResult.certMap      || {};
     renderWeek();
   } catch(e) {
     document.getElementById("calContainer").innerHTML =
@@ -400,11 +373,13 @@ async function initSchedule() {
 function buildWeekList() {
   var seen = {};
   schedData.forEach(function(r) {
-    var d = new Date(r.date + "T12:00:00");
-    var day = d.getDay();
+    var d    = new Date(r.date + "T12:00:00");
+    var day  = d.getDay();
     var diff = day === 0 ? -6 : 1 - day;
-    var mon = new Date(d); mon.setDate(d.getDate() + diff);
-    seen[fmtDate(mon)] = true;
+    var mon  = new Date(d);
+    mon.setDate(d.getDate() + diff);
+    var mk = fmtDate(mon);
+    seen[mk] = true;
   });
   schedWeeks = Object.keys(seen).sort();
   var today = fmtDate(new Date());
@@ -417,45 +392,57 @@ function changeWeek(dir) {
   schedWeekIdx = Math.max(0, Math.min(schedWeeks.length - 1, schedWeekIdx + dir));
   renderWeek();
 }
+
 function toggleLoc(loc) {
-  if (loc === "gd") { gdOn = !gdOn; document.getElementById("togGD").classList.toggle("off", !gdOn); }
-  else              { rlOn = !rlOn; document.getElementById("togRL").classList.toggle("off", !rlOn); }
+  if (loc === "gd") {
+    gdOn = !gdOn;
+    document.getElementById("togGD").classList.toggle("off", !gdOn);
+  } else {
+    rlOn = !rlOn;
+    document.getElementById("togRL").classList.toggle("off", !rlOn);
+  }
   renderWeek();
 }
 
 function renderWeek() {
   if (!schedWeeks.length) return;
   var monday = new Date(schedWeeks[schedWeekIdx] + "T12:00:00");
-  var sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+  var sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+
   document.getElementById("weekTitle").textContent = "Week of " + fmtDisp(monday);
 
-  var wStart = fmtDate(monday), wEnd = fmtDate(sunday);
-  var wkData = schedData.filter(function(r) { return r.date >= wStart && r.date <= wEnd; });
+  var wStart  = fmtDate(monday);
+  var wEnd    = fmtDate(sunday);
+  var wkData  = schedData.filter(function(r) { return r.date >= wStart && r.date <= wEnd; });
   var timeSet = {};
   wkData.forEach(function(r) { timeSet[r.time] = r.timeDisplay; });
   var times = Object.keys(timeSet).sort();
 
   var visLocs = LOCS.filter(function(l, i) { return (i === 0 && gdOn) || (i === 1 && rlOn); });
   if (!visLocs.length) {
-    document.getElementById("calContainer").innerHTML = "<div class='loading'>Select at least one location.</div>";
+    document.getElementById("calContainer").innerHTML =
+      "<div class='loading'>Select at least one location.</div>";
     return;
   }
 
   var dayDates = DAYS.map(function(_, i) {
-    var d = new Date(monday); d.setDate(monday.getDate() + i); return fmtDate(d);
+    var d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return fmtDate(d);
   });
 
-  var locCols = DAYS.length * visLocs.length;
+  var locCols     = DAYS.length * visLocs.length;
   var colTemplate = "56px repeat(" + locCols + ", 1fr)";
   var h = "<div class='cal-outer'><div class='cal'>";
 
   h += "<div class='cal-head' style='grid-template-columns:" + colTemplate + "'>";
   h += "<div class='head-time'></div>";
   DAYS.forEach(function(day, di) {
-    var ds = dayDates[di];
+    var ds   = dayDates[di];
     var date = new Date(ds + "T12:00:00");
     var span = visLocs.length > 1 ? "grid-column:span " + visLocs.length + ";" : "";
-    var br = di < DAYS.length - 1 ? "border-right:1px solid #e0e0e0;" : "";
+    var br   = di < DAYS.length - 1 ? "border-right:1px solid #e0e0e0;" : "";
     h += "<div class='head-day' style='" + span + br + "'>";
     h += "<div class='head-day-name'>" + day.slice(0,3) + " " +
          date.toLocaleDateString("en-US",{month:"short"}) + " " + date.getDate() + "</div>";
@@ -466,8 +453,9 @@ function renderWeek() {
          }).join("") + "</div>";
     h += "</div>";
   });
-  h += "</div><div class='cal-body'>";
+  h += "</div>";
 
+  h += "<div class='cal-body'>";
   times.forEach(function(time) {
     h += "<div class='cal-row' style='grid-template-columns:" + colTemplate + "'>";
     h += "<div class='time-cell'><span class='time-lbl'>" + timeSet[time] + "</span></div>";
@@ -477,7 +465,7 @@ function renderWeek() {
         var isLastDay = di === DAYS.length - 1;
         var isLastLoc = li === visLocs.length - 1;
         var border = (isLastLoc && !isLastDay) ? "border-right:1px solid #d0d0d0;" :
-                     (!isLastLoc) ? "border-right:0.5px solid #e8e8e8;" : "";
+                     (!isLastLoc)              ? "border-right:0.5px solid #e8e8e8;" : "";
         var slots = wkData.filter(function(r) {
           return r.date === ds && r.time === time && r.location === loc;
         });
@@ -491,15 +479,10 @@ function renderWeek() {
           h += "<div class='chip-coach'>" + slot.coach + "</div>";
           if (slot.isSwap) h += "<div class='chip-swap'>&#8596; SWAP</div>";
           h += "<select class='edit-sel' onchange='handleSlotAction(" + slot.rowIndex + ",this.value,this)'>";
-          h += "<option value=''>— reassign —</option><option value='OPEN'>OPEN</option>";
+          h += "<option value=''>— reassign —</option>";
+          h += "<option value='OPEN'>OPEN</option>";
           schedCoaches.forEach(function(c) {
-            var check = isCoachAvailableForSlot(c, slot.date, slot.time, slot.location, slot.classType);
-            var sel = c === slot.coach ? " selected" : "";
-            if (check.available) {
-              h += "<option value='" + c + "'" + sel + ">" + c + "</option>";
-            } else {
-              h += "<option value='" + c + "'" + sel + " style='color:#bbb'>" + c + " (unavailable)</option>";
-            }
+            h += "<option value='" + c + "'" + (c === slot.coach ? " selected" : "") + ">" + c + "</option>";
           });
           h += "<option value='__delete__'>🗑 Delete class</option>";
           h += "</select></div>";
@@ -521,20 +504,32 @@ async function doUpdateCoach(rowIndex, newCoach, sel) {
     if (row) { row.coach = newCoach; row.isSwap = newCoach !== "OPEN"; }
     showToast("Updated to " + (newCoach === "OPEN" ? "OPEN" : newCoach));
     renderWeek();
-  } catch(e) { showToast("Error saving"); sel.value = ""; }
+  } catch(e) {
+    showToast("Error saving");
+    sel.value = "";
+  }
 }
 
 async function handleSlotAction(rowIndex, value, sel) {
   if (!value) return;
   if (value === "__delete__") {
-    if (!confirm("Delete this class from the schedule permanently?")) { sel.value = ""; return; }
+    if (!confirm("Delete this class from the schedule permanently?")) {
+      sel.value = ""; return;
+    }
     try {
       await apiPost({ action: "deleteClass", rowIndex: rowIndex });
+      // Remove from local schedData
       schedData = schedData.filter(function(r) { return r.rowIndex !== rowIndex; });
-      schedData.forEach(function(r) { if (r.rowIndex > rowIndex) r.rowIndex--; });
+      // Fix rowIndex for all rows after the deleted one
+      schedData.forEach(function(r) {
+        if (r.rowIndex > rowIndex) r.rowIndex--;
+      });
       showToast("Class deleted");
       renderWeek();
-    } catch(e) { showToast("Error deleting"); sel.value = ""; }
+    } catch(e) {
+      showToast("Error deleting");
+      sel.value = "";
+    }
   } else {
     doUpdateCoach(rowIndex, value, sel);
   }
@@ -545,68 +540,8 @@ function getChipClass(ct, loc) {
   if (c.indexOf("weightlifting") >= 0 || c === "wl") return "wl-chip";
   if (c.indexOf("vitafit") >= 0 || c === "vf")       return "vf-chip";
   if (c.indexOf("open gym") >= 0)                    return "og-chip";
-  if (c.indexOf("hyrox") >= 0)                       return "hx-chip";
+  if (c.indexOf("hyrox") >= 0)                     return "sp-chip";
   return loc === "Guilderland" ? "gd-chip" : "rl-chip";
-}
-
-// ── Availability checking ────────────────────────────────────
-function isCoachBlackedOut(coach, dateStr, classT) {
-  return schedBlackouts.some(function(b) {
-    if (b.coach.toLowerCase() !== coach.toLowerCase()) return false;
-    if (dateStr < b.startDate || dateStr > b.endDate) return false;
-    var bt = b.type;
-    if (bt === "full day") return true;
-    if (bt === "available full day") return false;
-    var ws = b.startTime, we = b.endTime;
-    if (bt === "available only during time window" || bt === "available during time window") {
-      if (!ws && !we) return false;
-      return classT < ws || classT >= we;
-    }
-    if (bt === "unavailable during time window") return classT >= ws && classT < we;
-    return false;
-  });
-}
-
-function getTimeBlockClient(timeStr) {
-  var parts = timeStr.split(":");
-  var t = parseInt(parts[0]) * 100 + parseInt(parts[1]);
-  if (t >= 530  && t < 800)  return "Early AM";
-  if (t >= 800  && t < 1200) return "Late AM";
-  if (t >= 1200 && t < 1600) return "Midday";
-  if (t >= 1600 && t < 1900) return "Evening";
-  if (t >= 1900 && t <= 2200) return "Late Evening";
-  return "";
-}
-
-function getDayAbbrClient(dateStr) {
-  var d = new Date(dateStr + "T12:00:00");
-  var days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  return days[d.getDay()];
-}
-
-function isCoachAvailableForSlot(coach, dateStr, timeStr, location, classType) {
-  var cert = schedCertMap[coach];
-  if (!cert) return { available: true, reason: "" };
-  var certOk = cert.locations.indexOf(location) >= 0 &&
-    (cert.classes.indexOf(classType) >= 0 ||
-     (classType.toLowerCase().indexOf("open gym") >= 0 &&
-      cert.classes.some(function(c) { return c.toLowerCase() === "open gym"; })));
-  if (!certOk) return { available: false, reason: "not certified" };
-  var parts = timeStr.split(":");
-  var classT = parseInt(parts[0]) * 100 + parseInt(parts[1]);
-  if (isCoachBlackedOut(coach, dateStr, classT)) return { available: false, reason: "blacked out" };
-  var dayAbbr = getDayAbbrClient(dateStr);
-  var block = getTimeBlockClient(timeStr);
-  var colName = dayAbbr + " " + block;
-  var colIdx = schedAvailability.header.indexOf(colName);
-  if (colIdx === -1) return { available: true, reason: "" };
-  var coachRow = schedAvailability.rows.find(function(r) {
-    return r[0].trim() === coach && r[1].trim() === location;
-  });
-  if (!coachRow) return { available: false, reason: "not in availability sheet" };
-  var val = (coachRow[colIdx] || "").toString().trim().toUpperCase();
-  if (val !== "YES" && val !== "TRUE" && val !== "Y") return { available: false, reason: "not available" };
-  return { available: true, reason: "" };
 }
 
 // ════════════════════════════════════════════════
@@ -619,12 +554,18 @@ var avCoach = "", avSubs = [], avYear = new Date().getFullYear(),
 async function initAvailability() {
   try {
     var sel = document.getElementById("coachSelect");
-    if (!schedCoaches || !schedCoaches.length) return;
+    if (!schedCoaches || !schedCoaches.length) {
+      console.error("No coaches loaded");
+      return;
+    }
     schedCoaches.forEach(function(n) {
       var o = document.createElement("option");
-      o.value = o.textContent = n; sel.appendChild(o);
+      o.value = o.textContent = n;
+      sel.appendChild(o);
     });
-  } catch(e) { console.error("Error loading coaches:", e); }
+  } catch(e) {
+    console.error("Error loading coaches:", e);
+  }
 }
 
 document.getElementById("coachSelect").addEventListener("change", async function() {
@@ -649,20 +590,32 @@ function avRenderCal() {
   var grid = document.getElementById("avGrid");
   grid.innerHTML = "";
   ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].forEach(function(d) {
-    var el = document.createElement("div"); el.className = "dname"; el.textContent = d; grid.appendChild(el);
+    var el = document.createElement("div");
+    el.className = "dname"; el.textContent = d; grid.appendChild(el);
   });
   var first = new Date(avYear, avMonth, 1);
   var last  = new Date(avYear, avMonth + 1, 0);
+  var today = new Date(); today.setHours(0,0,0,0);
   var off = first.getDay() - 1; if (off < 0) off = 6;
-  for (var i = 0; i < off; i++) grid.appendChild(avMakeDayEl(new Date(avYear, avMonth, 1-(off-i)), true));
-  for (var d = 1; d <= last.getDate(); d++) grid.appendChild(avMakeDayEl(new Date(avYear, avMonth, d), false));
+  for (var i = 0; i < off; i++) {
+    grid.appendChild(avMakeDayEl(new Date(avYear, avMonth, 1-(off-i)), true));
+  }
+  for (var d = 1; d <= last.getDate(); d++) {
+    grid.appendChild(avMakeDayEl(new Date(avYear, avMonth, d), false));
+  }
   var rem = (off + last.getDate()) % 7;
-  if (rem > 0) for (var j = 1; j <= 7 - rem; j++) grid.appendChild(avMakeDayEl(new Date(avYear, avMonth+1, j), true));
+  if (rem > 0) {
+    for (var j = 1; j <= 7 - rem; j++) {
+      grid.appendChild(avMakeDayEl(new Date(avYear, avMonth+1, j), true));
+    }
+  }
 }
 
 function avMakeDayEl(date, other) {
   var el = document.createElement("div");
-  el.className = "mday"; el.textContent = date.getDate(); el.dataset.date = fmtDate(date);
+  el.className = "mday";
+  el.textContent = date.getDate();
+  el.dataset.date = fmtDate(date);
   if (other) el.classList.add("other");
   var today = new Date(); today.setHours(0,0,0,0);
   if (date.getTime() === today.getTime()) el.classList.add("today-d");
@@ -670,9 +623,12 @@ function avMakeDayEl(date, other) {
   if (sub) el.classList.add("has-" + avNorm(sub.type, sub.startTime, sub.endTime));
   avApplyRange(el, date);
   el.addEventListener("mousedown", function(e) {
-    avDragging = true; avStart = new Date(date); avEnd = new Date(date); avRenderCal(); e.preventDefault();
+    avDragging = true; avStart = new Date(date); avEnd = new Date(date);
+    avRenderCal(); e.preventDefault();
   });
-  el.addEventListener("mouseenter", function() { if (!avDragging) return; avEnd = new Date(date); avRenderCal(); });
+  el.addEventListener("mouseenter", function() {
+    if (!avDragging) return; avEnd = new Date(date); avRenderCal();
+  });
   el.addEventListener("mouseup", function() {
     if (!avDragging) return; avDragging = false;
     if (avStart > avEnd) { var tmp = avStart; avStart = avEnd; avEnd = tmp; }
@@ -714,7 +670,8 @@ function avShowForm() {
   var s = avStart <= avEnd ? avStart : avEnd;
   var e = avStart <= avEnd ? avEnd   : avStart;
   document.getElementById("avRangeLabel").textContent =
-    fmtDate(s) === fmtDate(e) ? "Selected: " + fmtDisp(s) : "Selected: " + fmtDisp(s) + " → " + fmtDisp(e);
+    fmtDate(s) === fmtDate(e) ? "Selected: " + fmtDisp(s) :
+                                 "Selected: " + fmtDisp(s) + " → " + fmtDisp(e);
   if (avEditing) {
     avSelectType(avNorm(avEditing.type, avEditing.startTime, avEditing.endTime));
   } else {
@@ -727,7 +684,9 @@ function avShowForm() {
 
 function avSelectType(t) {
   avType = t;
-  document.querySelectorAll(".type-btn").forEach(function(b) { b.classList.toggle("active", b.classList.contains(t)); });
+  document.querySelectorAll(".type-btn").forEach(function(b) {
+    b.classList.toggle("active", b.classList.contains(t));
+  });
   document.getElementById("avSubmitBtn").disabled = false;
 }
 
@@ -747,8 +706,11 @@ async function avSubmit() {
       avEditing = null; avStart = null; avEnd = null; avType = "";
       document.querySelectorAll(".type-btn").forEach(function(b) { b.classList.remove("active"); });
       document.getElementById("avForm").style.display = "none";
+      // ✅ Re-fetch from server to guarantee calendar reflects actual saved state
       await avLoadSubs();
-    } else { showToast("Error saving"); }
+    } else {
+      showToast("Error saving");
+    }
   } catch(err) { showToast("Error saving"); }
   btn.disabled = false; btn.textContent = "Save";
 }
@@ -757,34 +719,46 @@ async function avLoadSubs() {
   document.getElementById("avSubList").innerHTML = "<div class='loading'>Loading...</div>";
   try {
     avSubs = await apiFetch({ action: "getSubmissions", coach: avCoach });
-    avRenderSubs(); avRenderCal();
+    avRenderSubs();
+    avRenderCal(); // ✅ always re-render after fresh fetch
   } catch(e) {
-    document.getElementById("avSubList").innerHTML = "<div style='color:#c62828;font-size:13px'>Error loading submissions.</div>";
+    document.getElementById("avSubList").innerHTML =
+      "<div style='color:#c62828;font-size:13px'>Error loading submissions.</div>";
   }
 }
 
 function avRenderSubs() {
   var list = document.getElementById("avSubList");
-  if (!avSubs.length) { list.innerHTML = "<div style='color:#888;font-size:13px'>No submissions yet.</div>"; return; }
+  if (!avSubs.length) {
+    list.innerHTML = "<div style='color:#888;font-size:13px'>No submissions yet.</div>";
+    return;
+  }
   var labels = {
-    "full day": "🚫 Unavailable", "available only during time window": "🌅/🌆 AM or PM only",
-    "available full day": "✅ Available", "unavailable": "🚫 Unavailable",
-    "available_am": "🌅 AM only", "available_pm": "🌆 PM only", "available": "✅ All day"
+    "full day": "🚫 Unavailable",
+    "available only during time window": "🌅/🌆 AM or PM only",
+    "available full day": "✅ Available",
+    "unavailable": "🚫 Unavailable",
+    "available_am": "🌅 AM only",
+    "available_pm": "🌆 PM only",
+    "available": "✅ All day"
   };
-  list.innerHTML = avSubs.slice().sort(function(a,b) { return a.startDate.localeCompare(b.startDate); })
-    .map(function(s) {
-      var norm = avNorm(s.type, s.startTime, s.endTime);
-      var lbl  = labels[s.type.toLowerCase()] || s.type;
-      var dates = s.startDate === s.endDate
-        ? fmtDisp(new Date(s.startDate + "T12:00:00"))
-        : fmtDisp(new Date(s.startDate + "T12:00:00")) + " → " + fmtDisp(new Date(s.endDate + "T12:00:00"));
-      return "<div class='sub-item " + norm + "'>" +
-             "<div><div class='sub-dates'>" + dates + "</div><div class='sub-type'>" + lbl + "</div></div>" +
-             "<div class='sub-btns'>" +
-             "<button class='btn-edit' onclick='avEdit(" + s.rowIndex + ")'>Edit</button>" +
-             "<button class='btn-del' onclick='avDelete(" + s.rowIndex + ")'>Delete</button>" +
-             "</div></div>";
-    }).join("");
+  list.innerHTML = avSubs.slice().sort(function(a,b) {
+    return a.startDate.localeCompare(b.startDate);
+  }).map(function(s) {
+    var norm  = avNorm(s.type, s.startTime, s.endTime);
+    var lbl   = labels[s.type.toLowerCase()] || s.type;
+    var dates = s.startDate === s.endDate
+      ? fmtDisp(new Date(s.startDate + "T12:00:00"))
+      : fmtDisp(new Date(s.startDate + "T12:00:00")) + " → " +
+        fmtDisp(new Date(s.endDate + "T12:00:00"));
+    return "<div class='sub-item " + norm + "'>" +
+           "<div><div class='sub-dates'>" + dates + "</div>" +
+           "<div class='sub-type'>" + lbl + "</div></div>" +
+           "<div class='sub-btns'>" +
+           "<button class='btn-edit' onclick='avEdit(" + s.rowIndex + ")'>Edit</button>" +
+           "<button class='btn-del'  onclick='avDelete(" + s.rowIndex + ")'>Delete</button>" +
+           "</div></div>";
+  }).join("");
 }
 
 function avEdit(rowIndex) {
@@ -803,8 +777,11 @@ async function avDelete(rowIndex) {
     await apiPost({ action: "deleteBlackout", rowIndex: rowIndex });
     avEditing = null; avStart = null; avEnd = null;
     document.getElementById("avForm").style.display = "none";
-    await avLoadSubs(); showToast("Deleted");
-  } catch(e) { showToast("Error deleting"); }
+    await avLoadSubs();
+    showToast("Deleted");
+  } catch(e) {
+    showToast("Error deleting");
+  }
 }
 
 function avGetSub(date) {
@@ -818,173 +795,211 @@ function avNorm(type, startTime, endTime) {
   if (t === "available_am") return "available_am";
   if (t === "available_pm") return "available_pm";
   if (t === "available full day" || t === "available") return "available";
+
+  // For "Available Only During Time Window" use the actual times to distinguish
   if (t.indexOf("window") >= 0 || t.indexOf("available only") >= 0) {
+    // AM window ends at or before 12:00, PM window starts at or after 12:00
     if (endTime && endTime <= "12:00") return "available_am";
     if (startTime && startTime >= "12:00") return "available_pm";
+    // fallback if times are ambiguous
     return "available_am";
   }
   return "available";
 }
 
 // ════════════════════════════════════════════════
-// MONTHLY REPORT
+// TOTALS
 // ════════════════════════════════════════════════
 var totalsLoaded = false;
-
-function initReportControls() {
-  var sel = document.getElementById("rptCoach");
-  schedCoaches.forEach(function(n) {
-    var o = document.createElement("option"); o.value = o.textContent = n; sel.appendChild(o);
-  });
-  var monthSet = {};
-  schedData.forEach(function(r) {
-    var d = new Date(r.date + "T12:00:00");
-    var mk = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
-    monthSet[mk] = d.toLocaleDateString("en-US", { month:"long", year:"numeric" });
-  });
-  var months = Object.keys(monthSet).sort();
-  var mSel = document.getElementById("rptMonth");
-  months.forEach(function(mk) {
-    var o = document.createElement("option"); o.value = mk; o.textContent = monthSet[mk]; mSel.appendChild(o);
-  });
-  var now = new Date();
-  var cur = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,"0");
-  mSel.value = monthSet[cur] ? cur : months[months.length - 1];
-}
 
 async function loadTotals() {
   totalsLoaded = true;
   try {
     var attempts = 0;
     while ((!schedData || !schedData.length) && attempts < 20) {
-      await new Promise(function(r) { setTimeout(r, 300); }); attempts++;
+      await new Promise(function(r) { setTimeout(r, 300); });
+      attempts++;
     }
-    initReportControls();
-    renderReport();
+    if (!schedData || !schedData.length) {
+      document.getElementById("totalsContainer").innerHTML =
+        "<div class='loading'>No schedule data loaded yet.</div>";
+      return;
+    }
+    var d = buildTotalsFromScheduleData();
+    renderTotals(d);
   } catch(e) {
-    document.getElementById("rptContainer").innerHTML = "<div class='loading'>Error: " + e.message + "</div>";
+    document.getElementById("totalsContainer").innerHTML =
+      "<div class='loading'>Error loading totals: " + e.message + "</div>";
   }
 }
+function buildTotalsFromScheduleData() {
+  var weekMap  = {};
+  var coachSet = new Set();
+  var counts   = {};
 
-function renderReport() {
-  var coach = document.getElementById("rptCoach").value;
-  var monthKey = document.getElementById("rptMonth").value;
-  if (!monthKey) return;
-  var parts = monthKey.split("-");
-  var year = parseInt(parts[0]), month = parseInt(parts[1]) - 1;
-  var coaches = coach === "__all__" ? schedCoaches : [coach];
-  var html = "";
-  coaches.forEach(function(c) { html += buildCoachReport(c, year, month); });
-  document.getElementById("rptContainer").innerHTML = html || "<div class='loading'>No data for this period.</div>";
-}
+  if (!schedData || !schedData.length) {
+    return { weeks: [], coaches: [], counts: {} };
+  }
 
-function buildCoachReport(coach, year, month) {
-  var monthData = schedData.filter(function(r) {
-    if (r.coach !== coach) return false;
-    var d = new Date(r.date + "T12:00:00");
-    return d.getFullYear() === year && d.getMonth() === month;
+  schedData.forEach(function(r) {
+    if (!r.coach || r.coach === "OPEN") return;
+    var d    = new Date(r.date + "T12:00:00");
+    var day  = d.getDay();
+    var diff = day === 0 ? -6 : 1 - day;
+    var mon  = new Date(d);
+    mon.setDate(d.getDate() + diff);
+    var wk   = fmtDate(mon);
+    if (!weekMap[wk]) weekMap[wk] = fmtDisp(mon);
+    coachSet.add(r.coach);
+    if (!counts[wk])          counts[wk] = {};
+    if (!counts[wk][r.coach]) counts[wk][r.coach] = { classes:0, ogAM:0, ogPM:0 };
+    var ct = (r.classType || "").toLowerCase();
+    if (ct.indexOf("open gym") >= 0) {
+      if (ct.indexOf("am") >= 0) counts[wk][r.coach].ogAM++;
+      else                       counts[wk][r.coach].ogPM++;
+    } else {
+      counts[wk][r.coach].classes++;
+    }
   });
-  var dayMap = {}, totals = {};
-  monthData.forEach(function(r) {
-    if (!dayMap[r.date]) dayMap[r.date] = [];
-    dayMap[r.date].push({ classType: r.classType, location: r.location });
-    totals[r.classType] = (totals[r.classType] || 0) + 1;
-  });
-  var firstDay = new Date(year, month, 1);
-  var lastDay  = new Date(year, month + 1, 0);
-  var today    = fmtDate(new Date());
-  var monthName = firstDay.toLocaleDateString("en-US", { month:"long", year:"numeric" });
-  var startOffset = firstDay.getDay() - 1; if (startOffset < 0) startOffset = 6;
 
-  var html = "<div class='rpt-wrap'>";
-  html += "<div class='rpt-title'><span>" + coach + "</span><span>" + monthName + "</span></div>";
-  html += "<div class='rpt-grid'>";
-  ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].forEach(function(d) { html += "<div class='rpt-dname'>" + d + "</div>"; });
-  for (var i = 0; i < startOffset; i++) html += "<div class='rpt-day other'></div>";
-  for (var d = 1; d <= lastDay.getDate(); d++) {
-    var dateStr = year + "-" + String(month+1).padStart(2,"0") + "-" + String(d).padStart(2,"0");
-    var classes = dayMap[dateStr] || [];
-    html += "<div class='rpt-day" + (dateStr === today ? " today-r" : "") + "'>";
-    html += "<div class='rpt-daynum" + (classes.length ? " has-classes" : "") + "'>" + d + "</div>";
-    classes.forEach(function(cls) {
-      var lc = cls.location === "Guilderland" ? "gd" : "rl";
-      var ll = cls.location === "Guilderland" ? "GD" : "RL";
-      html += "<div class='rpt-class " + lc + "'>" + cls.classType + " · " + ll + "</div>";
-    });
-    html += "</div>";
-  }
-  var rem = (startOffset + lastDay.getDate()) % 7;
-  if (rem > 0) for (var j = 0; j < 7 - rem; j++) html += "<div class='rpt-day other'></div>";
-  html += "</div>";
-  var totalKeys = Object.keys(totals).sort();
-  if (totalKeys.length) {
-    html += "<div class='rpt-totals'><div class='rpt-totals-title'>Monthly Totals</div><div class='rpt-totals-grid'>";
-    totalKeys.forEach(function(ct) {
-      html += "<div class='rpt-total-chip'>" + ct + ": <span>" + totals[ct] + "</span></div>";
-    });
-    var grand = totalKeys.reduce(function(s, ct) { return s + totals[ct]; }, 0);
-    html += "<div class='rpt-total-chip' style='border-color:#4a86e8'>Total: <span>" + grand + "</span></div>";
-    html += "</div></div>";
-  }
-  html += "</div>";
-  return html;
+  return {
+    weeks:   Object.keys(weekMap).sort().map(function(wk) {
+               return { key: wk, label: weekMap[wk] };
+             }),
+    coaches: Array.from(coachSet).sort(),
+    counts:  counts
+  };
 }
 
-function printReport() { window.print(); }
-
+function renderTotals(d) {
+  if (!d.weeks || !d.weeks.length) {
+    document.getElementById("totalsContainer").innerHTML =
+      "<div class='loading'>No data yet.</div>";
+    return;
+  }
+  var h = "";
+  d.weeks.forEach(function(wk) {
+    h += "<div class='week-block'>" +
+         "<div class='week-block-title'>Week of " + wk.label + "</div>" +
+         "<table class='totals-table'>" +
+         "<tr><th>Coach</th><th>Classes</th><th>OG AM</th><th>OG PM</th><th>Total</th></tr>";
+    d.coaches.forEach(function(coach) {
+      var c = (d.counts[wk.key] && d.counts[wk.key][coach]) || { classes:0, ogAM:0, ogPM:0 };
+      var total = c.classes + c.ogAM + c.ogPM;
+      if (!total) return;
+      h += "<tr><td>" + coach + "</td><td>" + c.classes + "</td><td>" +
+           c.ogAM + "</td><td>" + c.ogPM + "</td><td><strong>" + total + "</strong></td></tr>";
+    });
+    h += "</table></div>";
+  });
+  document.getElementById("totalsContainer").innerHTML = h;
+}
 // ════════════════════════════════════════════════
 // ADMIN
 // ════════════════════════════════════════════════
 var adRecentClasses = [];
+var adAdminUnlocked = true; // set to false and add PIN check here later if needed
+
 function initAdmin() {
+  // Populate coach dropdown from already-loaded schedCoaches
   var sel = document.getElementById("adCoach");
   schedCoaches.forEach(function(n) {
-    var o = document.createElement("option"); o.value = o.textContent = n; sel.appendChild(o);
+    var o = document.createElement("option");
+    o.value = o.textContent = n;
+    sel.appendChild(o);
   });
+
+  // Default date to today
   var today = new Date();
-  document.getElementById("adDate").value = today.getFullYear() + "-" +
-    String(today.getMonth()+1).padStart(2,"0") + "-" + String(today.getDate()).padStart(2,"0");
+  var yyyy  = today.getFullYear();
+  var mm    = String(today.getMonth()+1).padStart(2,"0");
+  var dd    = String(today.getDate()).padStart(2,"0");
+  document.getElementById("adDate").value = yyyy + "-" + mm + "-" + dd;
 }
 
 async function submitAddClass() {
-  var date = document.getElementById("adDate").value;
-  var time = document.getElementById("adTime").value;
-  var location = document.getElementById("adLocation").value;
+  var date      = document.getElementById("adDate").value;
+  var time      = document.getElementById("adTime").value;
+  var location  = document.getElementById("adLocation").value;
   var classType = document.getElementById("adClassType").value.trim();
-  var coach = document.getElementById("adCoach").value;
-  var msgEl = document.getElementById("adMsg");
+  var coach     = document.getElementById("adCoach").value;
+  var msgEl     = document.getElementById("adMsg");
+
   msgEl.className = "msg";
+
   if (!date || !time || !location || !classType || !coach) {
-    msgEl.textContent = "Please fill in all fields."; msgEl.className = "msg error"; return;
+    msgEl.textContent = "Please fill in all fields.";
+    msgEl.className   = "msg error";
+    return;
   }
+
   var btn = document.querySelector("#page-admin .btn-primary");
-  btn.disabled = true; btn.textContent = "Saving...";
+  btn.disabled    = true;
+  btn.textContent = "Saving...";
+
   try {
-    var res = await apiPost({ action: "addClass", payload: { date, time, location, classType, coach } });
+    var res = await apiPost({
+      action:  "addClass",
+      payload: { date, time, location, classType, coach }
+    });
+
     if (res.success) {
-      msgEl.textContent = "✅ Class added successfully!"; msgEl.className = "msg success";
+      msgEl.textContent = "✅ Class added successfully!";
+      msgEl.className   = "msg success";
+
+      // Add to recent list
       adRecentClasses.unshift({ date, time, location, classType, coach });
       adRenderRecent();
-      var timeDisp = new Date("1970-01-01T" + time + ":00").toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
-      schedData.push({ rowIndex: 999999, date, day: new Date(date+"T12:00:00").toLocaleDateString("en-US",{weekday:"long"}),
-        time, timeDisplay: timeDisp, location, classType, coach, isSwap: false });
-      document.getElementById("adTime").value = "";
-      document.getElementById("adLocation").value = "";
+
+      // Add to local schedData so calendar reflects it immediately
+      var timeDisp = new Date("1970-01-01T" + time + ":00")
+        .toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
+      var timeFmt  = time.replace(":", "");
+      if (timeFmt.length === 4) timeFmt = "0" + timeFmt;
+      schedData.push({
+        rowIndex:    999999,
+        date:        date,
+        day:         new Date(date+"T12:00:00").toLocaleDateString("en-US",{weekday:"long"}),
+        time:        time,
+        timeDisplay: timeDisp,
+        location:    location,
+        classType:   classType,
+        coach:       coach,
+        isSwap:      false
+      });
+
+      // Clear form
+      document.getElementById("adTime").value      = "";
+      document.getElementById("adLocation").value  = "";
       document.getElementById("adClassType").value = "";
-      document.getElementById("adCoach").value = "";
+      document.getElementById("adCoach").value     = "";
+
       showToast("Class added!");
-    } else { msgEl.textContent = "Error: " + (res.error || "Unknown error"); msgEl.className = "msg error"; }
-  } catch(e) { msgEl.textContent = "Error: " + e.message; msgEl.className = "msg error"; }
-  btn.disabled = false; btn.textContent = "Add to Schedule";
+    } else {
+      msgEl.textContent = "Error: " + (res.error || "Unknown error");
+      msgEl.className   = "msg error";
+    }
+  } catch(e) {
+    msgEl.textContent = "Error: " + e.message;
+    msgEl.className   = "msg error";
+  }
+
+  btn.disabled    = false;
+  btn.textContent = "Add to Schedule";
 }
 
 function adRenderRecent() {
   var list = document.getElementById("adRecentList");
-  if (!adRecentClasses.length) { list.innerHTML = "<div style='color:#aaa;font-size:13px'>No classes added yet.</div>"; return; }
+  if (!adRecentClasses.length) {
+    list.innerHTML = "<div style='color:#aaa;font-size:13px'>No classes added yet.</div>";
+    return;
+  }
   list.innerHTML = adRecentClasses.map(function(c) {
     return "<div class='sub-item available' style='border-color:#4a86e8'>" +
-      "<div><div class='sub-dates'>" + c.date + " at " + c.time + "</div>" +
-      "<div class='sub-type'>" + c.classType + " · " + c.location + " · " + c.coach + "</div></div></div>";
+      "<div>" +
+      "<div class='sub-dates'>" + c.date + " at " + c.time + "</div>" +
+      "<div class='sub-type'>" + c.classType + " · " + c.location + " · " + c.coach + "</div>" +
+      "</div></div>";
   }).join("");
 }
 
@@ -992,7 +1007,9 @@ function adRenderRecent() {
 // BOOT
 // ════════════════════════════════════════════════
 window.onload = function() {
-  initSchedule().then(function() { initAvailability(); });
+  initSchedule().then(function() {
+    initAvailability();
+  });
 };
 </script>
 </body>
