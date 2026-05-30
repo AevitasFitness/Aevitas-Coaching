@@ -203,6 +203,8 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
     <button class="nav-tab" onclick="showPage('availability',this)">Availability</button>
     <button class="nav-tab" onclick="showPage('totals',this)">Totals</button>
     <button class="nav-tab" onclick="showPage('admin',this)">⚙️ Admin</button>
+    <button class="nav-tab" onclick="showPage('sessions',this)">PT & On-Ramp</button>
+    <button class="nav-tab" onclick="showPage('hours',this)">Hours</button>
   </div>
 </nav>
 
@@ -346,6 +348,73 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
   </div>
 </div>
 
+<!-- SESSIONS -->
+<div class="page" id="page-sessions">
+  <div class="toolbar" style="flex-wrap:wrap;gap:8px;">
+    <div class="week-nav">
+      <button class="btn" onclick="ptChangeWeek(-1)">&#8592;</button>
+      <div class="week-title" id="ptWeekTitle">Loading...</div>
+      <button class="btn" onclick="ptChangeWeek(1)">&#8594;</button>
+    </div>
+  </div>
+  <div id="ptCalContainer"><div class="loading">Loading sessions...</div></div>
+
+  <div class="card" style="margin-top:12px">
+    <label class="field-label" style="font-size:15px;margin-bottom:14px">Log a PT or OnRamp Session</label>
+    <label class="field-label">Date</label>
+    <input type="date" id="ptDate">
+    <label class="field-label">Coach</label>
+    <select id="ptCoach" style="margin-bottom:12px">
+      <option value="">— Select coach —</option>
+    </select>
+    <label class="field-label">Type</label>
+    <select id="ptType" style="margin-bottom:12px">
+      <option value="">— Select type —</option>
+      <option value="PT">Personal Training</option>
+      <option value="On-Ramp">On-Ramp</option>
+    </select>
+    <label class="field-label">Notes (optional)</label>
+    <input type="text" id="ptNotes" placeholder="e.g. client name or session details">
+    <div id="ptMsg" class="msg"></div>
+    <button class="btn btn-primary" onclick="submitPTSession()"
+            style="width:100%;padding:12px;font-size:14px;font-weight:600;">
+      Save Session
+    </button>
+  </div>
+</div>
+
+<!-- HOURS -->
+<div class="page" id="page-hours">
+  <div class="card">
+    <label class="field-label" style="font-size:15px;margin-bottom:14px">Log Other Hours</label>
+    <label class="field-label">Coach</label>
+    <select id="ohCoach" style="margin-bottom:12px">
+      <option value="">— Select coach —</option>
+    </select>
+    <label class="field-label">Month</label>
+    <input type="month" id="ohMonth">
+    <label class="field-label">Type</label>
+    <select id="ohType" style="margin-bottom:12px">
+      <option value="">— Select type —</option>
+      <option value="Programming">Programming</option>
+      <option value="Cleaning">Cleaning</option>
+      <option value="Social Media">Social Media</option>
+    </select>
+    <label class="field-label">Hours</label>
+    <input type="number" id="ohHours" min="0" step="0.5" placeholder="e.g. 3.5">
+    <div id="ohMsg" class="msg"></div>
+    <button class="btn btn-primary" onclick="submitOtherHours()"
+            style="width:100%;padding:12px;font-size:14px;font-weight:600;">
+      Save Hours
+    </button>
+  </div>
+
+  <div class="card">
+    <label class="field-label" style="margin-bottom:10px">Logged Hours</label>
+    <div id="ohList"><div class="loading">Loading...</div></div>
+  </div>
+</div>
+
 <script>
 // ── IMPORTANT: Replace with your Apps Script /exec URL ──────────
 const API = "https://script.google.com/macros/s/AKfycbzFdUbF7vB3yHDdy1pqZG6Sqvwx5_8j9TMGCWqi7kYjYOtrQO8-yvzOn8EfbtzgmTXteg/exec";
@@ -395,11 +464,14 @@ function showPage(id, btn) {
   document.getElementById("page-" + id).classList.add("active");
   if (btn) btn.classList.add("active");
   if (id === "totals" && !totalsLoaded) loadTotals();
+  if (id === "sessions" && !ptInitialized) initSessions();
+  if (id === "hours"    && !ohInitialized) initHours();
   if (id === "admin" && !adminInitialized) {
     adminInitialized = true;
     initAdmin();
   }
 }
+
 
 // ════════════════════════════════════════════════
 // SCHEDULE
@@ -408,12 +480,16 @@ var schedData = [], schedCoaches = [], schedWeeks = [], schedWeekIdx = 0;
 var gdOn = true, rlOn = true;
 var DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 var LOCS = ["Guilderland","Round Lake"];
+var ptSessions  = [];
+var otherHours  = [];
 
 async function initSchedule() {
   try {
     var result   = await apiFetch({ action: "getInitialData" });
     schedData    = result.schedule || [];
     schedCoaches = result.coaches || [];
+    ptSessions   = result.ptSessions  || [];
+    otherHours   = result.otherHours  || [];
     buildWeekList();
     renderWeek();
   } catch(e) {
@@ -1146,8 +1222,274 @@ function adRenderRecent() {
 }
 
 // ════════════════════════════════════════════════
+// SESSIONS (PT / ON-RAMP)
+// ════════════════════════════════════════════════
+var ptWeeks = [], ptWeekIdx = 0, ptInitialized = false;
+
+function initSessions() {
+  ptInitialized = true;
+
+  // Populate coach dropdown
+  var sel = document.getElementById("ptCoach");
+  schedCoaches.forEach(function(n) {
+    var o = document.createElement("option");
+    o.value = o.textContent = n; sel.appendChild(o);
+  });
+
+  // Default date to today
+  var today = new Date();
+  document.getElementById("ptDate").value =
+    today.getFullYear() + "-" +
+    String(today.getMonth()+1).padStart(2,"0") + "-" +
+    String(today.getDate()).padStart(2,"0");
+
+  buildPTWeekList();
+  renderPTCalendar();
+}
+
+function buildPTWeekList() {
+  var seen = {};
+  // Include weeks from schedule data range
+  schedData.forEach(function(r) {
+    var d    = new Date(r.date + "T12:00:00");
+    var day  = d.getDay();
+    var diff = day === 0 ? -6 : 1 - day;
+    var mon  = new Date(d); mon.setDate(d.getDate() + diff);
+    seen[fmtDate(mon)] = true;
+  });
+  // Also include weeks from PT sessions
+  ptSessions.forEach(function(r) {
+    var d    = new Date(r.date + "T12:00:00");
+    var day  = d.getDay();
+    var diff = day === 0 ? -6 : 1 - day;
+    var mon  = new Date(d); mon.setDate(d.getDate() + diff);
+    seen[fmtDate(mon)] = true;
+  });
+  // Add current week if not present
+  var now  = new Date();
+  var day  = now.getDay();
+  var diff = day === 0 ? -6 : 1 - day;
+  var mon  = new Date(now); mon.setDate(now.getDate() + diff);
+  seen[fmtDate(mon)] = true;
+
+  ptWeeks = Object.keys(seen).sort();
+  var today = fmtDate(new Date());
+  ptWeekIdx = ptWeeks.findIndex(function(w) { return w > today; });
+  ptWeekIdx = ptWeekIdx > 0 ? ptWeekIdx - 1 : 0;
+  if (ptWeekIdx < 0) ptWeekIdx = ptWeeks.length - 1;
+}
+
+function ptChangeWeek(dir) {
+  ptWeekIdx = Math.max(0, Math.min(ptWeeks.length - 1, ptWeekIdx + dir));
+  renderPTCalendar();
+}
+
+function renderPTCalendar() {
+  if (!ptWeeks.length) return;
+  var monday = new Date(ptWeeks[ptWeekIdx] + "T12:00:00");
+  var sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+  var today  = fmtDate(new Date());
+
+  document.getElementById("ptWeekTitle").textContent = "Week of " + fmtDisp(monday);
+
+  var wStart = fmtDate(monday), wEnd = fmtDate(sunday);
+  var wkData = ptSessions.filter(function(r) {
+    return r.date >= wStart && r.date <= wEnd;
+  });
+
+  var dayDates = DAYS.map(function(_, i) {
+    var d = new Date(monday); d.setDate(monday.getDate() + i); return fmtDate(d);
+  });
+
+  var colTemplate = "80px repeat(7, 1fr)";
+  var h = "<div class='cal-outer'><div class='cal'>";
+
+  // Header
+  h += "<div class='cal-head' style='grid-template-columns:" + colTemplate + "'>";
+  h += "<div class='head-time'></div>";
+  DAYS.forEach(function(day, di) {
+    var ds   = dayDates[di];
+    var date = new Date(ds + "T12:00:00");
+    var br   = di < DAYS.length - 1 ? "border-right:1px solid #e0e0e0;" : "";
+    h += "<div class='head-day' style='" + br + "'>";
+    h += "<div class='head-day-name'>" + day.slice(0,3) + " " +
+         date.toLocaleDateString("en-US",{month:"short"}) + " " + date.getDate() + "</div>";
+    h += "</div>";
+  });
+  h += "</div>";
+
+  // Body — one row per session type group
+  var types = ["PT", "On-Ramp"];
+  h += "<div class='cal-body'>";
+  types.forEach(function(type) {
+    h += "<div class='cal-row' style='grid-template-columns:" + colTemplate + "'>";
+    h += "<div class='time-cell'><span class='time-lbl'>" + type + "</span></div>";
+    DAYS.forEach(function(day, di) {
+      var ds    = dayDates[di];
+      var slots = wkData.filter(function(r) { return r.date === ds && r.type === type; });
+      var br    = di < DAYS.length - 1 ? "border-right:0.5px solid #f0f0f0;" : "";
+      h += "<div class='loc-col' style='" + br + "border-bottom:0.5px solid #f0f0f0;min-height:52px;'>";
+      slots.forEach(function(slot) {
+        var chipColor = type === "PT" ? "background:#EAF3DE;color:#27500A" :
+                                        "background:#EEEDFE;color:#3C3489";
+        h += "<div class='chip' style='" + chipColor + "'>";
+        h += "<div class='chip-name'>" + slot.coach + "</div>";
+        if (slot.notes) h += "<div class='chip-coach'>" + slot.notes + "</div>";
+        h += "<button onclick='deletePTSession(" + slot.rowIndex + ")' " +
+             "style='font-size:9px;background:none;border:none;cursor:pointer;color:#999;padding:0;margin-top:2px;'>✕ remove</button>";
+        h += "</div>";
+      });
+      h += "</div>";
+    });
+    h += "</div>";
+  });
+  h += "</div></div></div>";
+
+  document.getElementById("ptCalContainer").innerHTML = h;
+}
+
+async function submitPTSession() {
+  var date  = document.getElementById("ptDate").value;
+  var coach = document.getElementById("ptCoach").value;
+  var type  = document.getElementById("ptType").value;
+  var notes = document.getElementById("ptNotes").value.trim();
+  var msgEl = document.getElementById("ptMsg");
+  msgEl.className = "msg";
+
+  if (!date || !coach || !type) {
+    msgEl.textContent = "Please fill in date, coach and type.";
+    msgEl.className   = "msg error"; return;
+  }
+
+  var btn = document.querySelector("#page-sessions .btn-primary");
+  btn.disabled = true; btn.textContent = "Saving...";
+
+  try {
+    var res = await apiPost({ action: "savePTSession",
+      payload: { date, coach, type, notes } });
+    if (res.success) {
+      showToast("Session saved!");
+      msgEl.className = "msg";
+      // Add to local data
+      ptSessions.push({ rowIndex: Date.now(), date, coach, type, notes });
+      buildPTWeekList();
+      renderPTCalendar();
+      document.getElementById("ptNotes").value = "";
+    } else {
+      msgEl.textContent = "Error: " + (res.error || "Unknown");
+      msgEl.className   = "msg error";
+    }
+  } catch(e) {
+    msgEl.textContent = "Error: " + e.message;
+    msgEl.className   = "msg error";
+  }
+  btn.disabled = false; btn.textContent = "Save Session";
+}
+
+async function deletePTSession(rowIndex) {
+  if (!confirm("Remove this session?")) return;
+  try {
+    await apiPost({ action: "deletePTSession", rowIndex: rowIndex });
+    ptSessions = ptSessions.filter(function(r) { return r.rowIndex !== rowIndex; });
+    ptSessions.forEach(function(r) { if (r.rowIndex > rowIndex) r.rowIndex--; });
+    renderPTCalendar();
+    showToast("Session removed");
+  } catch(e) { showToast("Error removing session"); }
+}
+
+// ════════════════════════════════════════════════
+// OTHER HOURS
+// ════════════════════════════════════════════════
+var ohInitialized = false;
+
+function initHours() {
+  ohInitialized = true;
+
+  var sel = document.getElementById("ohCoach");
+  schedCoaches.forEach(function(n) {
+    var o = document.createElement("option");
+    o.value = o.textContent = n; sel.appendChild(o);
+  });
+
+  // Default month to current
+  var now = new Date();
+  document.getElementById("ohMonth").value =
+    now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,"0");
+
+  renderOHList();
+}
+
+function renderOHList() {
+  var list = document.getElementById("ohList");
+  if (!otherHours.length) {
+    list.innerHTML = "<div style='color:#aaa;font-size:13px'>No hours logged yet.</div>";
+    return;
+  }
+  var sorted = otherHours.slice().sort(function(a,b) {
+    return (a.month + a.coach).localeCompare(b.month + b.coach);
+  });
+  list.innerHTML = sorted.map(function(h) {
+    return "<div class='sub-item available' style='border-color:#4a86e8'>" +
+      "<div>" +
+      "<div class='sub-dates'>" + h.coach + " — " + h.month + "</div>" +
+      "<div class='sub-type'>" + h.type + ": " + h.hours + " hrs</div>" +
+      "</div>" +
+      "<div class='sub-btns'>" +
+      "<button class='btn-del' onclick='deleteOHEntry(" + h.rowIndex + ")'>Delete</button>" +
+      "</div></div>";
+  }).join("");
+}
+
+async function submitOtherHours() {
+  var coach = document.getElementById("ohCoach").value;
+  var month = document.getElementById("ohMonth").value;
+  var type  = document.getElementById("ohType").value;
+  var hours = parseFloat(document.getElementById("ohHours").value);
+  var msgEl = document.getElementById("ohMsg");
+  msgEl.className = "msg";
+
+  if (!coach || !month || !type || isNaN(hours) || hours <= 0) {
+    msgEl.textContent = "Please fill in all fields with valid values.";
+    msgEl.className   = "msg error"; return;
+  }
+
+  var btn = document.querySelector("#page-hours .btn-primary");
+  btn.disabled = true; btn.textContent = "Saving...";
+
+  try {
+    var res = await apiPost({ action: "saveOtherHours",
+      payload: { month, coach, type, hours } });
+    if (res.success) {
+      showToast("Hours saved!");
+      msgEl.className = "msg";
+      otherHours.push({ rowIndex: Date.now(), month, coach, type, hours });
+      renderOHList();
+      document.getElementById("ohHours").value = "";
+    } else {
+      msgEl.textContent = "Error: " + (res.error || "Unknown");
+      msgEl.className   = "msg error";
+    }
+  } catch(e) {
+    msgEl.textContent = "Error: " + e.message;
+    msgEl.className   = "msg error";
+  }
+  btn.disabled = false; btn.textContent = "Save Hours";
+}
+
+async function deleteOHEntry(rowIndex) {
+  if (!confirm("Delete this entry?")) return;
+  try {
+    await apiPost({ action: "deleteOtherHours", rowIndex: rowIndex });
+    otherHours = otherHours.filter(function(r) { return r.rowIndex !== rowIndex; });
+    otherHours.forEach(function(r) { if (r.rowIndex > rowIndex) r.rowIndex--; });
+    renderOHList();
+    showToast("Deleted");
+  } catch(e) { showToast("Error deleting"); }
+}
+// ════════════════════════════════════════════════
 // BOOT
 // ════════════════════════════════════════════════
+
 window.onload = function() {
   initSchedule().then(function() {
     initAvailability();
