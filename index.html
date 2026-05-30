@@ -149,6 +149,49 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
 .toast.show { opacity: 1; }
 .loading { text-align: center; padding: 40px; color: #888; font-size: 14px; }
 .hint { font-size: 11px; color: #aaa; margin-top: 6px; }
+
+.rpt-wrap { background: white; border-radius: 10px;
+            border: 0.5px solid #e0e0e0; overflow: hidden; margin-bottom: 16px; }
+.rpt-title { background: #4a86e8; color: white; padding: 10px 16px;
+             font-weight: 600; font-size: 15px;
+             display: flex; justify-content: space-between; align-items: center; }
+.rpt-grid { display: grid; grid-template-columns: repeat(7, 1fr);
+            gap: 0; border-top: 0.5px solid #e0e0e0; }
+.rpt-dname { text-align: center; font-size: 10px; font-weight: 500;
+             color: #888; padding: 5px 2px;
+             background: #f8f8f8; border-bottom: 0.5px solid #e0e0e0;
+             border-right: 0.5px solid #f0f0f0; }
+.rpt-dname:last-child { border-right: none; }
+.rpt-day { padding: 5px; min-height: 70px; border-bottom: 0.5px solid #f0f0f0;
+           border-right: 0.5px solid #f0f0f0; vertical-align: top; }
+.rpt-day:nth-child(7n) { border-right: none; }
+.rpt-day.other { background: #fafafa; }
+.rpt-day.today-r { background: #f0f6ff; }
+.rpt-daynum { font-size: 11px; font-weight: 500; color: #999; margin-bottom: 3px; }
+.rpt-daynum.has-classes { color: #333; }
+.rpt-class { font-size: 10px; line-height: 1.4; color: #444;
+             background: #f0f4ff; border-radius: 3px;
+             padding: 1px 4px; margin-bottom: 2px; }
+.rpt-class.gd { background: #E6F1FB; color: #0C447C; }
+.rpt-class.rl { background: #E1F5EE; color: #085041; }
+.rpt-totals { padding: 12px 16px; background: #f8f8f8;
+              border-top: 1px solid #e0e0e0; }
+.rpt-totals-title { font-size: 11px; font-weight: 600;
+                    color: #888; text-transform: uppercase;
+                    letter-spacing: 0.05em; margin-bottom: 8px; }
+.rpt-totals-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.rpt-total-chip { background: white; border: 0.5px solid #ddd;
+                  border-radius: 6px; padding: 5px 10px;
+                  font-size: 12px; color: #333; }
+.rpt-total-chip span { font-weight: 600; color: #4a86e8; }
+@media print {
+  .nav, .toolbar, #page-schedule, #page-availability, #page-admin { display: none !important; }
+  .page { display: none !important; }
+  #page-totals { display: block !important; padding: 0 !important; }
+  .rpt-wrap { break-inside: avoid; margin-bottom: 24px;
+              border: 1px solid #ccc !important; }
+}
+}
 </style>
 </head>
 <body>
@@ -247,7 +290,16 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
 
 <!-- TOTALS -->
 <div class="page" id="page-totals">
-  <div id="totalsContainer"><div class="loading">Loading totals...</div></div>
+  <div class="toolbar" style="flex-wrap:wrap;gap:8px;">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <select id="rptCoach" onchange="renderReport()" style="width:160px;margin:0;padding:6px 10px;font-size:13px;">
+        <option value="__all__">All Coaches</option>
+      </select>
+      <select id="rptMonth" onchange="renderReport()" style="width:160px;margin:0;padding:6px 10px;font-size:13px;"></select>
+    </div>
+    <button class="btn" onclick="printReport()" style="margin-left:auto;">🖨 Print</button>
+  </div>
+  <div id="rptContainer"><div class="loading">Loading...</div></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -808,9 +860,42 @@ function avNorm(type, startTime, endTime) {
 }
 
 // ════════════════════════════════════════════════
-// TOTALS
+// MONTHLY REPORT
 // ════════════════════════════════════════════════
 var totalsLoaded = false;
+
+function initReportControls() {
+  // Populate coach dropdown
+  var sel = document.getElementById("rptCoach");
+  schedCoaches.forEach(function(n) {
+    var o = document.createElement("option");
+    o.value = o.textContent = n;
+    sel.appendChild(o);
+  });
+
+  // Populate month dropdown from schedData
+  var monthSet = {};
+  schedData.forEach(function(r) {
+    var d  = new Date(r.date + "T12:00:00");
+    var mk = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
+    var lbl = d.toLocaleDateString("en-US", { month:"long", year:"numeric" });
+    monthSet[mk] = lbl;
+  });
+
+  var months = Object.keys(monthSet).sort();
+  var mSel   = document.getElementById("rptMonth");
+  months.forEach(function(mk) {
+    var o = document.createElement("option");
+    o.value = mk; o.textContent = monthSet[mk];
+    mSel.appendChild(o);
+  });
+
+  // Default to current month
+  var now = new Date();
+  var cur = now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,"0");
+  if (monthSet[cur]) mSel.value = cur;
+  else mSel.value = months[months.length - 1];
+}
 
 async function loadTotals() {
   totalsLoaded = true;
@@ -820,79 +905,136 @@ async function loadTotals() {
       await new Promise(function(r) { setTimeout(r, 300); });
       attempts++;
     }
-    if (!schedData || !schedData.length) {
-      document.getElementById("totalsContainer").innerHTML =
-        "<div class='loading'>No schedule data loaded yet.</div>";
-      return;
-    }
-    var d = buildTotalsFromScheduleData();
-    renderTotals(d);
+    initReportControls();
+    renderReport();
   } catch(e) {
-    document.getElementById("totalsContainer").innerHTML =
-      "<div class='loading'>Error loading totals: " + e.message + "</div>";
+    document.getElementById("rptContainer").innerHTML =
+      "<div class='loading'>Error: " + e.message + "</div>";
   }
 }
-function buildTotalsFromScheduleData() {
-  var weekMap  = {};
-  var coachSet = new Set();
-  var counts   = {};
 
-  if (!schedData || !schedData.length) {
-    return { weeks: [], coaches: [], counts: {} };
-  }
+function renderReport() {
+  var coach    = document.getElementById("rptCoach").value;
+  var monthKey = document.getElementById("rptMonth").value;
+  if (!monthKey) return;
 
-  schedData.forEach(function(r) {
-    if (!r.coach || r.coach === "OPEN") return;
-    var d    = new Date(r.date + "T12:00:00");
-    var day  = d.getDay();
-    var diff = day === 0 ? -6 : 1 - day;
-    var mon  = new Date(d);
-    mon.setDate(d.getDate() + diff);
-    var wk   = fmtDate(mon);
-    if (!weekMap[wk]) weekMap[wk] = fmtDisp(mon);
-    coachSet.add(r.coach);
-    if (!counts[wk])          counts[wk] = {};
-    if (!counts[wk][r.coach]) counts[wk][r.coach] = { classes:0, ogAM:0, ogPM:0 };
-    var ct = (r.classType || "").toLowerCase();
-    if (ct.indexOf("open gym") >= 0) {
-      if (ct.indexOf("am") >= 0) counts[wk][r.coach].ogAM++;
-      else                       counts[wk][r.coach].ogPM++;
-    } else {
-      counts[wk][r.coach].classes++;
-    }
+  var parts = monthKey.split("-");
+  var year  = parseInt(parts[0]);
+  var month = parseInt(parts[1]) - 1; // 0-indexed
+
+  var coaches = coach === "__all__" ? schedCoaches : [coach];
+  var html    = "";
+
+  coaches.forEach(function(c) {
+    html += buildCoachReport(c, year, month);
   });
 
-  return {
-    weeks:   Object.keys(weekMap).sort().map(function(wk) {
-               return { key: wk, label: weekMap[wk] };
-             }),
-    coaches: Array.from(coachSet).sort(),
-    counts:  counts
-  };
+  document.getElementById("rptContainer").innerHTML = html || "<div class='loading'>No data for this period.</div>";
 }
 
-function renderTotals(d) {
-  if (!d.weeks || !d.weeks.length) {
-    document.getElementById("totalsContainer").innerHTML =
-      "<div class='loading'>No data yet.</div>";
-    return;
+function buildCoachReport(coach, year, month) {
+  // Filter schedule for this coach and month
+  var monthData = schedData.filter(function(r) {
+    if (r.coach !== coach) return false;
+    var d = new Date(r.date + "T12:00:00");
+    return d.getFullYear() === year && d.getMonth() === month;
+  });
+
+  // Build day map: dateStr → [{ classType, location }]
+  var dayMap = {};
+  monthData.forEach(function(r) {
+    if (!dayMap[r.date]) dayMap[r.date] = [];
+    dayMap[r.date].push({ classType: r.classType, location: r.location });
+  });
+
+  // Build monthly totals
+  var totals = {};
+  monthData.forEach(function(r) {
+    totals[r.classType] = (totals[r.classType] || 0) + 1;
+  });
+
+  // Calendar grid
+  var firstDay = new Date(year, month, 1);
+  var lastDay  = new Date(year, month + 1, 0);
+  var today    = fmtDate(new Date());
+  var monthName = firstDay.toLocaleDateString("en-US", { month:"long", year:"numeric" });
+
+  // Start on Monday
+  var startOffset = firstDay.getDay() - 1;
+  if (startOffset < 0) startOffset = 6;
+
+  var html = "<div class='rpt-wrap'>";
+  html += "<div class='rpt-title'><span>" + coach + "</span><span>" + monthName + "</span></div>";
+  html += "<div class='rpt-grid'>";
+
+  // Day name headers
+  ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].forEach(function(d) {
+    html += "<div class='rpt-dname'>" + d + "</div>";
+  });
+
+  // Leading empty cells
+  for (var i = 0; i < startOffset; i++) {
+    html += "<div class='rpt-day other'></div>";
   }
-  var h = "";
-  d.weeks.forEach(function(wk) {
-    h += "<div class='week-block'>" +
-         "<div class='week-block-title'>Week of " + wk.label + "</div>" +
-         "<table class='totals-table'>" +
-         "<tr><th>Coach</th><th>Classes</th><th>OG AM</th><th>OG PM</th><th>Total</th></tr>";
-    d.coaches.forEach(function(coach) {
-      var c = (d.counts[wk.key] && d.counts[wk.key][coach]) || { classes:0, ogAM:0, ogPM:0 };
-      var total = c.classes + c.ogAM + c.ogPM;
-      if (!total) return;
-      h += "<tr><td>" + coach + "</td><td>" + c.classes + "</td><td>" +
-           c.ogAM + "</td><td>" + c.ogPM + "</td><td><strong>" + total + "</strong></td></tr>";
+
+  // Day cells
+  for (var d = 1; d <= lastDay.getDate(); d++) {
+    var dateStr  = year + "-" +
+                   String(month+1).padStart(2,"0") + "-" +
+                   String(d).padStart(2,"0");
+    var isToday  = dateStr === today;
+    var classes  = dayMap[dateStr] || [];
+    var hasClass = classes.length > 0;
+
+    html += "<div class='rpt-day" +
+            (isToday ? " today-r" : "") + "'>";
+    html += "<div class='rpt-daynum" +
+            (hasClass ? " has-classes" : "") + "'>" + d + "</div>";
+
+    classes.forEach(function(cls) {
+      var locClass = cls.location === "Guilderland" ? "gd" : "rl";
+      var locLabel = cls.location === "Guilderland" ? "GD" : "RL";
+      html += "<div class='rpt-class " + locClass + "'>" +
+              cls.classType + " · " + locLabel + "</div>";
     });
-    h += "</table></div>";
-  });
-  document.getElementById("totalsContainer").innerHTML = h;
+
+    html += "</div>";
+  }
+
+  // Trailing empty cells
+  var totalCells = startOffset + lastDay.getDate();
+  var remainder  = totalCells % 7;
+  if (remainder > 0) {
+    for (var j = 0; j < 7 - remainder; j++) {
+      html += "<div class='rpt-day other'></div>";
+    }
+  }
+
+  html += "</div>"; // end rpt-grid
+
+  // Totals row
+  var totalKeys = Object.keys(totals).sort();
+  if (totalKeys.length) {
+    html += "<div class='rpt-totals'>";
+    html += "<div class='rpt-totals-title'>Monthly Totals</div>";
+    html += "<div class='rpt-totals-grid'>";
+    totalKeys.forEach(function(ct) {
+      html += "<div class='rpt-total-chip'>" + ct +
+              ": <span>" + totals[ct] + "</span></div>";
+    });
+    // Grand total
+    var grand = totalKeys.reduce(function(sum, ct) { return sum + totals[ct]; }, 0);
+    html += "<div class='rpt-total-chip' style='border-color:#4a86e8'>" +
+            "Total: <span>" + grand + "</span></div>";
+    html += "</div></div>";
+  }
+
+  html += "</div>"; // end rpt-wrap
+  return html;
+}
+
+function printReport() {
+  window.print();
 }
 // ════════════════════════════════════════════════
 // ADMIN
