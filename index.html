@@ -417,18 +417,13 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
 
 <script>
 // ── IMPORTANT: Replace with your Apps Script /exec URL ──────────
-const API = "/api";
+const API = "https://script.google.com/macros/s/AKfycbxYfF_mHzImT348OVH8qwvR8M5kfEqygA4wASb-GAQZLO_lzzwprwUf-OQBJoWxaxZJog/exec";
 
 async function apiFetch(params) {
   const url = API + "?" + new URLSearchParams(params).toString();
-  try {
-    const r   = await fetch(url, { redirect: "follow", mode: "cors" });
-    const txt = await r.text();
-    return JSON.parse(txt);
-  } catch(e) {
-    // If CORS blocks, try no-cors mode and parse manually
-    throw new Error("Fetch failed: " + e.message);
-  }
+  const r   = await fetch(url, { redirect: "follow", mode: "cors" });
+  const txt = await r.text();
+  return JSON.parse(txt);
 }
 
 async function apiPost(body) {
