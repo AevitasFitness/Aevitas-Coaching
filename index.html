@@ -324,11 +324,11 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
 <div class="toast" id="toast"></div>
 
 <script>
-const API = "/api";
+const API = "https://script.google.com/macros/s/AKfycbyH4cDx0ls_R_mHRVC16pFIUsnm1FuRfn9cghVP7tse8JARyJyPZZ-FZfFnPT6JEMLlWw/exec";
 
 async function apiFetch(params) {
   const url = API + "?" + new URLSearchParams(params).toString();
-  const r   = await fetch(url);
+  const r   = await fetch(url, { redirect: "follow", mode: "cors" });
   const txt = await r.text();
   return JSON.parse(txt);
 }
@@ -337,7 +337,9 @@ async function apiPost(body) {
   const r = await fetch(API, {
     method:  "POST",
     headers: { "Content-Type": "text/plain" },
-    body:    JSON.stringify(body)
+    body:    JSON.stringify(body),
+    redirect: "follow",
+    mode:    "cors"
   });
   const txt = await r.text();
   return JSON.parse(txt);
