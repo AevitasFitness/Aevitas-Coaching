@@ -491,12 +491,13 @@ function renderWeek() {
 
   var wStart  = fmtDate(monday);
   var wEnd    = fmtDate(sunday);
-  var hiddenTypes = ["cleaning", "programming", "social media"];
+  var hiddenTypes = ["cleaning", "programming", "social media", "monthly meeting", "test"];
+  var ptTypes = ["personal training", "onramp"];
   var wkData = schedData.filter(function(r) {
     if (r.date < wStart || r.date > wEnd) return false;
     var ct = (r.classType || "").toLowerCase();
     if (hiddenTypes.indexOf(ct) >= 0) return false;
-    if (!ptOn && (ct === "personal training" || ct === "pt" || ct === "on-ramp")) return false;
+    if (!ptOn && ptTypes.indexOf(ct) >= 0) return false;
     return true;
   });
   var timeSet = {};
@@ -1178,9 +1179,7 @@ async function submitAddClass() {
       // Clear form
       document.getElementById("adTime").value      = "";
       document.getElementById("adLocation").value  = "";
-      document.getElementById("adClassType").selectedIndex = 0;
-      document.getElementById("adClassTypeCustom").style.display = "none";
-      document.getElementById("adClassTypeCustom").value = "";
+      document.getElementById("adClassType").value = "";
       document.getElementById("adCoach").value     = "";
 
       showToast("Class added!");
