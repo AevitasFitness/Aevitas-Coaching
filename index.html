@@ -1142,8 +1142,10 @@ async function submitAddClass() {
       msgEl.className   = "msg success";
 
       // Add to recent list
-      adRecentClasses.unshift({ date, time, location, classType, coach });
-      adRenderRecent();
+      try {
+        adRecentClasses.unshift({ date, time, location, classType, coach });
+        adRenderRecent();
+      } catch(e) { console.log("render error:", e.message); }
 
       // Add to local schedData so calendar reflects it immediately
       var timeDisp = new Date("1970-01-01T" + time + ":00")
@@ -1165,7 +1167,9 @@ async function submitAddClass() {
       // Clear form
       document.getElementById("adTime").value      = "";
       document.getElementById("adLocation").value  = "";
-      document.getElementById("adClassType").value = "";
+      document.getElementById("adClassType").selectedIndex = 0;
+      document.getElementById("adClassTypeCustom").style.display = "none";
+      document.getElementById("adClassTypeCustom").value = "";
       document.getElementById("adCoach").value     = "";
 
       showToast("Class added!");
