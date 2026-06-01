@@ -326,11 +326,9 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
     </select>
 
     <label class="field-label">Class Type</label>
-    <select id="adClassType" onchange="handleClassTypeChange()">
+    <select id="adClassType">
       <option value="">— Select class type —</option>
     </select>
-    <input type="text" id="adClassTypeCustom" placeholder="Enter class type..."
-           style="display:none;margin-top:-8px;">
 
     <label class="field-label">Coach</label>
     <select id="adCoach">
@@ -406,13 +404,6 @@ function showPage(id, btn) {
     adminInitialized = true;
     initAdmin();
   }
-}
-
-function handleClassTypeChange() {
-  var sel    = document.getElementById("adClassType");
-  var custom = document.getElementById("adClassTypeCustom");
-  custom.style.display = sel.value === "__other__" ? "block" : "none";
-  if (sel.value !== "__other__") custom.value = "";
 }
 
 // ════════════════════════════════════════════════
@@ -1095,9 +1086,6 @@ function initAdmin() {
   schedClassTypes.forEach(function(t) {
     var o = document.createElement("option"); o.value = o.textContent = t; ctSel.appendChild(o);
   });
-  var other = document.createElement("option");
-  other.value = "__other__"; other.textContent = "Other (type manually)";
-  ctSel.appendChild(other);
   
 
   // Default date to today
@@ -1112,10 +1100,7 @@ async function submitAddClass() {
   var date      = document.getElementById("adDate").value;
   var time      = document.getElementById("adTime").value;
   var location  = document.getElementById("adLocation").value;
-  var ctSel     = document.getElementById("adClassType");
-  var classType = ctSel.value === "__other__"
-    ? document.getElementById("adClassTypeCustom").value.trim()
-    : ctSel.value;
+  var classType = document.getElementById("adClassType").value;
   var coach     = document.getElementById("adCoach").value;
   var msgEl     = document.getElementById("adMsg");
 
@@ -1163,14 +1148,10 @@ async function submitAddClass() {
         });
       } catch(e) { console.log("CRASH at step 3:", e.message); }
 
-      try {
-        document.getElementById("adTime").value = "";
-        document.getElementById("adLocation").value = "";
-        document.getElementById("adClassType").selectedIndex = 0;
-        document.getElementById("adClassTypeCustom").style.display = "none";
-        document.getElementById("adClassTypeCustom").value = "";
-        document.getElementById("adCoach").value = "";
-      } catch(e) { console.log("CRASH at step 4:", e.message); }
+      document.getElementById("adTime").value      = "";
+      document.getElementById("adLocation").value  = "";
+      document.getElementById("adClassType").value = "";
+      document.getElementById("adCoach").value     = "";
 
       try {
         showToast("Class added!");
