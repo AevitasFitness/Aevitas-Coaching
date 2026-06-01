@@ -338,6 +338,8 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
     <select id="adCoach">
       <option value="">— Select coach —</option>
     </select>
+    <label class="field-label">Notes (optional)</label>
+    <input type="text" id="adNotes" placeholder="e.g. client name, session details...">
 
     <div id="adMsg" class="msg"></div>
 
@@ -1109,6 +1111,7 @@ async function submitAddClass() {
   var location  = document.getElementById("adLocation").value;
   var classType = document.getElementById("adClassType").value;
   var coach     = document.getElementById("adCoach").value;
+  var notes     = document.getElementById("adNotes").value.trim();
   var msgEl     = document.getElementById("adMsg");
 
   msgEl.className = "msg";
@@ -1126,7 +1129,7 @@ async function submitAddClass() {
   try {
     var res = await apiPost({
       action:  "addClass",
-      payload: { date, time, location, classType, coach }
+      payload: { date, time, location, classType, coach, notes }
     });
 
     if (res.success) {
@@ -1158,6 +1161,7 @@ async function submitAddClass() {
       document.getElementById("adTime").value      = "";
       document.getElementById("adLocation").value  = "";
       document.getElementById("adClassType").value = "";
+      document.getElementById("adNotes").value = "";
       document.getElementById("adCoach").value     = "";
 
       try {
