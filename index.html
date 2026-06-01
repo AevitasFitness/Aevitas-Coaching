@@ -217,6 +217,9 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
     <div class="loc-toggles">
       <button class="tog tog-gd" id="togGD" onclick="toggleLoc('gd')">Guilderland</button>
       <button class="tog tog-rl" id="togRL" onclick="toggleLoc('rl')">Round Lake</button>
+      <button class="tog off" id="togPT"
+              onclick="togglePT()"
+              style="background:#f0f0f0;color:#999;border-color:#ddd;">PT & On-Ramp</button>
     </div>
   </div>
   <div id="calContainer"><div class="loading" id="loadingMsg">
@@ -323,7 +326,11 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
     </select>
 
     <label class="field-label">Class Type</label>
-    <input type="text" id="adClassType" placeholder="e.g. CrossFit, ViTaFIT, Hyrox...">
+    <select id="adClassType" onchange="handleClassTypeChange()">
+      <option value="">— Select class type —</option>
+    </select>
+    <input type="text" id="adClassTypeCustom" placeholder="Enter class type..."
+           style="display:none;margin-top:-8px;">
 
     <label class="field-label">Coach</label>
     <select id="adCoach">
@@ -401,19 +408,29 @@ function showPage(id, btn) {
   }
 }
 
+function handleClassTypeChange() {
+  var sel    = document.getElementById("adClassType");
+  var custom = document.getElementById("adClassTypeCustom");
+  custom.style.display = sel.value === "__other__" ? "block" : "none";
+  if (sel.value !== "__other__") custom.value = "";
+}
+
 // ════════════════════════════════════════════════
 // SCHEDULE
 // ════════════════════════════════════════════════
 var schedData = [], schedCoaches = [], schedWeeks = [], schedWeekIdx = 0;
 var gdOn = true, rlOn = true;
+var ptOn = false;
 var DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 var LOCS = ["Guilderland","Round Lake"];
+var schedClassTypes = [];
 
 async function initSchedule() {
   try {
     var result   = await apiFetch({ action: "getInitialData" });
-    schedData    = result.schedule || [];
-    schedCoaches = result.coaches || [];
+    schedData       = result.schedule    || [];
+    schedCoaches    = result.coaches     || [];
+    schedClassTypes = result.classTypes  || [];
     buildWeekList();
     renderWeek();
   } catch(e) {
@@ -456,6 +473,23 @@ function toggleLoc(loc) {
   renderWeek();
 }
 
+function togglePT() {
+  ptOn = !ptOn;
+  var btn = document.getElementById("togPT");
+  if (ptOn) {
+    btn.style.background   = "#EAF3DE";
+    btn.style.color        = "#27500A";
+    btn.style.borderColor  = "#C0DD97";
+    btn.classList.remove("off");
+  } else {
+    btn.style.background   = "#f0f0f0";
+    btn.style.color        = "#999";
+    btn.style.borderColor  = "#ddd";
+    btn.classList.add("off");
+  }
+  renderWeek();
+}
+
 function renderWeek() {
   if (!schedWeeks.length) return;
   var monday = new Date(schedWeeks[schedWeekIdx] + "T12:00:00");
@@ -466,7 +500,14 @@ function renderWeek() {
 
   var wStart  = fmtDate(monday);
   var wEnd    = fmtDate(sunday);
-  var wkData  = schedData.filter(function(r) { return r.date >= wStart && r.date <= wEnd; });
+  var hiddenTypes = ["cleaning", "programming", "social media"];
+  var wkData = schedData.filter(function(r) {
+    if (r.date < wStart || r.date > wEnd) return false;
+    var ct = (r.classType || "").toLowerCase();
+    if (hiddenTypes.indexOf(ct) >= 0) return false;
+    if (!ptOn && (ct === "personal training" || ct === "pt" || ct === "on-ramp")) return false;
+    return true;
+  });
   var timeSet = {};
   wkData.forEach(function(r) { timeSet[r.time] = r.timeDisplay; });
   var times = Object.keys(timeSet).sort();
@@ -1050,6 +1091,14 @@ function initAdmin() {
     o.value = o.textContent = n;
     sel.appendChild(o);
   });
+  var ctSel = document.getElementById("adClassType");
+  schedClassTypes.forEach(function(t) {
+    var o = document.createElement("option"); o.value = o.textContent = t; ctSel.appendChild(o);
+  });
+  var other = document.createElement("option");
+  other.value = "__other__"; other.textContent = "Other (type manually)";
+  ctSel.appendChild(other);
+  
 
   // Default date to today
   var today = new Date();
@@ -1063,7 +1112,10 @@ async function submitAddClass() {
   var date      = document.getElementById("adDate").value;
   var time      = document.getElementById("adTime").value;
   var location  = document.getElementById("adLocation").value;
-  var classType = document.getElementById("adClassType").value.trim();
+  var ctSel     = document.getElementById("adClassType");
+  var classType = ctSel.value === "__other__"
+    ? document.getElementById("adClassTypeCustom").value.trim()
+    : ctSel.value;
   var coach     = document.getElementById("adCoach").value;
   var msgEl     = document.getElementById("adMsg");
 
