@@ -1141,11 +1141,41 @@ async function submitAddClass() {
       msgEl.textContent = "✅ Class added successfully!";
       msgEl.className   = "msg success";
 
-      // Add to recent list
+      // Add to recent list. - adding error messages
+      if (res.success) {
+      try {
+        msgEl.textContent = "✅ Class added successfully!";
+        msgEl.className   = "msg success";
+      } catch(e) { console.log("CRASH at step 1:", e.message); }
+
       try {
         adRecentClasses.unshift({ date, time, location, classType, coach });
         adRenderRecent();
-      } catch(e) { console.log("render error:", e.message); }
+      } catch(e) { console.log("CRASH at step 2:", e.message); }
+
+      try {
+        var timeDisp = new Date("1970-01-01T" + time + ":00")
+          .toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
+        schedData.push({
+          rowIndex: 999999, date, day: new Date(date+"T12:00:00")
+            .toLocaleDateString("en-US",{weekday:"long"}),
+          time, timeDisplay: timeDisp, location, classType, coach, isSwap: false
+        });
+      } catch(e) { console.log("CRASH at step 3:", e.message); }
+
+      try {
+        document.getElementById("adTime").value = "";
+        document.getElementById("adLocation").value = "";
+        document.getElementById("adClassType").selectedIndex = 0;
+        document.getElementById("adClassTypeCustom").style.display = "none";
+        document.getElementById("adClassTypeCustom").value = "";
+        document.getElementById("adCoach").value = "";
+      } catch(e) { console.log("CRASH at step 4:", e.message); }
+
+      try {
+        showToast("Class added!");
+      } catch(e) { console.log("CRASH at step 5:", e.message); }
+    }
 
       // Add to local schedData so calendar reflects it immediately
       var timeDisp = new Date("1970-01-01T" + time + ":00")
