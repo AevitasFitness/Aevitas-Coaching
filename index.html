@@ -568,6 +568,7 @@ function renderWeek() {
           h += "<div class='chip " + cc + sc + oc + "'>";
           h += "<div class='chip-name'>" + slot.classType + "</div>";
           h += "<div class='chip-coach'>" + slot.coach + "</div>";
+          if (slot.notes) h += "<div class='chip-coach' style='font-style:italic;'>" + slot.notes + "</div>";
           if (slot.isSwap) h += "<div class='chip-swap'>&#8596; SWAP</div>";
           h += "<select class='edit-sel' onchange='handleSlotAction(" + slot.rowIndex + ",this.value,this)'>";
           h += "<option value=''>— reassign —</option>";
