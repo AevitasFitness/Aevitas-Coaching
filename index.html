@@ -1005,7 +1005,7 @@ function buildCoachReport(coach, year, month) {
   // Build monthly totals
   var totals = {};
   monthData.forEach(function(r) {
-    totals[r.classType] = (totals[r.classType] || 0) + 1;
+    totals[r.classType] = (totals[r.classType] || 0) + (r.hours || 1);
   });
 
   // Calendar grid
