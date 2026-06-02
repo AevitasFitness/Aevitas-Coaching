@@ -412,7 +412,17 @@ function showPage(id, btn) {
   if (id === "totals" && !totalsLoaded) loadTotals();
   if (id === "admin" && !adminInitialized) {
     adminInitialized = true;
-    initAdmin();
+    // Wait for data to be ready on mobile
+    if (schedCoaches && schedCoaches.length) {
+      initAdmin();
+    } else {
+      var checkInterval = setInterval(function() {
+        if (schedCoaches && schedCoaches.length) {
+          clearInterval(checkInterval);
+          initAdmin();
+        }
+      }, 200);
+    }
   }
 }
 
