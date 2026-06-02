@@ -330,7 +330,7 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
     </select>
 
     <label class="field-label">Class Type</label>
-    <select id="adClassType">
+    <select id="adClassType" onchange="handleClassTypeChange()">
       <option value="">— Select class type —</option>
     </select>
 
@@ -340,6 +340,10 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
     </select>
     <label class="field-label">Notes (optional)</label>
     <input type="text" id="adNotes" placeholder="e.g. client name, session details...">
+
+    <label class="field-label" id="adHoursLabel" style="display:none">Hours</label>
+    <input type="number" id="adHours" min="0.5" step="0.5" placeholder="e.g. 2.5"
+           style="display:none">
 
     <div id="adMsg" class="msg"></div>
 
@@ -410,6 +414,15 @@ function showPage(id, btn) {
     adminInitialized = true;
     initAdmin();
   }
+}
+
+function handleClassTypeChange() {
+  var val        = document.getElementById("adClassType").value;
+  var otherTypes = ["Social Media", "Programming", "Cleaning", "Monthly Meeting"];
+  var isOther    = otherTypes.indexOf(val) >= 0;
+  document.getElementById("adHoursLabel").style.display = isOther ? "block" : "none";
+  document.getElementById("adHours").style.display      = isOther ? "block" : "none";
+  if (!isOther) document.getElementById("adHours").value = "";
 }
 
 // ════════════════════════════════════════════════
@@ -1114,6 +1127,7 @@ async function submitAddClass() {
   var coach     = document.getElementById("adCoach").value;
   var notes     = document.getElementById("adNotes").value.trim();
   var msgEl     = document.getElementById("adMsg");
+  var hours = parseFloat(document.getElementById("adHours").value) || 1;
 
   msgEl.className = "msg";
 
@@ -1130,7 +1144,7 @@ async function submitAddClass() {
   try {
     var res = await apiPost({
       action:  "addClass",
-      payload: { date, time, location, classType, coach, notes }
+      payload: { date, time, location, classType, coach, notes, hours }
     });
 
     if (res.success) {
@@ -1164,6 +1178,7 @@ async function submitAddClass() {
       document.getElementById("adClassType").value = "";
       document.getElementById("adNotes").value = "";
       document.getElementById("adCoach").value     = "";
+      document.getElementById("adHours").value = "";
 
       try {
         showToast("Class added!");
