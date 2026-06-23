@@ -521,7 +521,7 @@ function renderWeek() {
   var wStart  = fmtDate(monday);
   var wEnd    = fmtDate(sunday);
   var hiddenTypes = ["cleaning", "programming", "social media", "member success"];
-  var ptTypes = ["personal training", "onramp", "monthly meeting"];
+  var ptTypes = ["personal training", "onramp"];
   var wkData = schedData.filter(function(r) {
     if (r.date < wStart || r.date > wEnd) return false;
     var ct = (r.classType || "").toLowerCase();
