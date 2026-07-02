@@ -428,7 +428,7 @@ function showPage(id, btn) {
 
 function handleClassTypeChange() {
   var val        = document.getElementById("adClassType").value;
-  var otherTypes = ["Social Media", "Programming", "Cleaning", "Monthly Meeting", "Member Success"];
+  var otherTypes = ["Social Media", "Programming", "Cleaning", "Monthly Meeting", "Member Success", "Personal Training"];
   var isOther    = otherTypes.indexOf(val) >= 0;
   document.getElementById("adHoursLabel").style.display = isOther ? "block" : "none";
   document.getElementById("adHours").style.display      = isOther ? "block" : "none";
