@@ -428,7 +428,7 @@ function showPage(id, btn) {
 
 function handleClassTypeChange() {
   var val        = document.getElementById("adClassType").value;
-  var otherTypes = ["Social Media", "Programming", "Cleaning", "Monthly Meeting", "Member Success", "Personal Training"];
+  var otherTypes = ["Social Media", "Programming", "Cleaning", "Monthly Meeting", "Member Success", "Personal Training", "Gym Rental"];
   var isOther    = otherTypes.indexOf(val) >= 0;
   document.getElementById("adHoursLabel").style.display = isOther ? "block" : "none";
   document.getElementById("adHours").style.display      = isOther ? "block" : "none";
@@ -521,7 +521,7 @@ function renderWeek() {
   var wStart  = fmtDate(monday);
   var wEnd    = fmtDate(sunday);
   var hiddenTypes = ["cleaning", "programming", "social media", "member success"];
-  var ptTypes = ["personal training", "onramp"];
+  var ptTypes = ["personal training", "onramp", "gym rental"];
   var wkData = schedData.filter(function(r) {
     if (r.date < wStart || r.date > wEnd) return false;
     var ct = (r.classType || "").toLowerCase();
