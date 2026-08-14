@@ -521,7 +521,7 @@ function landingToggle(id) {
 
 function landingLoadPrefs() {
   try {
-    var prefs = JSON.parse(localStorage.getItem("coachPortalPrefs") || "{}");
+    var prefs = JSON.parse(sessionStorage.getItem("coachPortalPrefs") || "{}");
     // Default: all locations checked if no prefs saved
     var gdPref = prefs.gd !== undefined ? prefs.gd : true;
     var rlPref = prefs.rl !== undefined ? prefs.rl : true;
@@ -537,7 +537,7 @@ function landingLoadPrefs() {
 
 function landingSavePrefs(gd, rl, pt) {
   try {
-    localStorage.setItem("coachPortalPrefs", JSON.stringify({ gd, rl, pt }));
+    sessionStorage.setItem("coachPortalPrefs", JSON.stringify({ gd, rl, pt }));
   } catch(e) {}
 }
 
@@ -609,17 +609,48 @@ var schedClassTypes = [];
 
 async function initSchedule() {
   try {
-    var result      = await apiFetch({ action: "getInitialData" });
+    // Load cached data instantly if available
+    try {
+      var cached = localStorage.getItem("schedCache");
+      if (cached) {
+        var parsedCache = JSON.parse(cached);
+        schedData       = parsedCache.schedule    || [];
+        schedCoaches    = parsedCache.coaches     || [];
+        schedClassTypes = parsedCache.classTypes  || [];
+        buildWeekList();
+        landingDataReady = true;
+        var status = document.getElementById("landingStatus");
+        if (status) status.textContent = "✅ Ready!";
+      }
+    } catch(ce) {}
+
+    // Fetch fresh data in background
+    var result = await apiFetch({ action: "getInitialData" });
     schedData       = result.schedule    || [];
     schedCoaches    = result.coaches     || [];
     schedClassTypes = result.classTypes  || [];
+
+    // Save to cache
+    try {
+      localStorage.setItem("schedCache", JSON.stringify({
+        schedule:   schedData,
+        coaches:    schedCoaches,
+        classTypes: schedClassTypes
+      }));
+    } catch(se) {}
+
     buildWeekList();
     landingDataReady = true;
-    // Update landing status
     var status = document.getElementById("landingStatus");
     if (status) status.textContent = "✅ Ready!";
+
+    // If already past landing page, re-render with fresh data
+    var landing = document.getElementById("landing");
+    if (landing && landing.style.display === "none") {
+      renderWeek();
+    }
   } catch(e) {
-    landingDataReady = true; // don't block forever
+    landingDataReady = true;
     var status = document.getElementById("landingStatus");
     if (status) status.textContent = "⚠️ Error loading data";
   }
@@ -1419,37 +1450,33 @@ function adRenderRecent() {
 // ════════════════════════════════════════════════
 window.onload = function() {
   landingLoadPrefs();
+
+  // Check if we can skip landing — needs session prefs AND cache
+  try {
+    var prefs  = JSON.parse(sessionStorage.getItem("coachPortalPrefs") || "null");
+    var cached = localStorage.getItem("schedCache");
+    if (prefs !== null && cached !== null) {
+      // Apply prefs immediately
+      gdOn = prefs.gd !== undefined ? prefs.gd : true;
+      rlOn = prefs.rl !== undefined ? prefs.rl : true;
+      ptOn = prefs.pt !== undefined ? prefs.pt : false;
+      document.getElementById("togGD").classList.toggle("off", !gdOn);
+      document.getElementById("togRL").classList.toggle("off", !rlOn);
+      var ptBtn = document.getElementById("togPT");
+      if (ptOn) {
+        ptBtn.style.background  = "#EAF3DE";
+        ptBtn.style.color       = "#27500A";
+        ptBtn.style.borderColor = "#C0DD97";
+        ptBtn.classList.remove("off");
+      }
+      // Hide landing and show cached schedule immediately
+      document.getElementById("landing").style.display = "none";
+    }
+  } catch(e) {}
+
   initSchedule().then(function() {
     initAvailability();
   });
-
-  // If prefs already saved, skip landing page after data loads
-  try {
-    var prefs = JSON.parse(localStorage.getItem("coachPortalPrefs") || "null");
-    if (prefs !== null) {
-      // Prefs exist — apply them and skip landing once data is ready
-      var checkReady = setInterval(function() {
-        if (landingDataReady) {
-          clearInterval(checkReady);
-          // Apply saved prefs
-          gdOn = prefs.gd !== undefined ? prefs.gd : true;
-          rlOn = prefs.rl !== undefined ? prefs.rl : true;
-          ptOn = prefs.pt !== undefined ? prefs.pt : false;
-          document.getElementById("togGD").classList.toggle("off", !gdOn);
-          document.getElementById("togRL").classList.toggle("off", !rlOn);
-          var ptBtn = document.getElementById("togPT");
-          if (ptOn) {
-            ptBtn.style.background  = "#EAF3DE";
-            ptBtn.style.color       = "#27500A";
-            ptBtn.style.borderColor = "#C0DD97";
-            ptBtn.classList.remove("off");
-          }
-          document.getElementById("landing").style.display = "none";
-          renderWeek();
-        }
-      }, 200);
-    }
-  } catch(e) {}
 };
 </script>
 </body>
