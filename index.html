@@ -1422,6 +1422,34 @@ window.onload = function() {
   initSchedule().then(function() {
     initAvailability();
   });
+
+  // If prefs already saved, skip landing page after data loads
+  try {
+    var prefs = JSON.parse(localStorage.getItem("coachPortalPrefs") || "null");
+    if (prefs !== null) {
+      // Prefs exist — apply them and skip landing once data is ready
+      var checkReady = setInterval(function() {
+        if (landingDataReady) {
+          clearInterval(checkReady);
+          // Apply saved prefs
+          gdOn = prefs.gd !== undefined ? prefs.gd : true;
+          rlOn = prefs.rl !== undefined ? prefs.rl : true;
+          ptOn = prefs.pt !== undefined ? prefs.pt : false;
+          document.getElementById("togGD").classList.toggle("off", !gdOn);
+          document.getElementById("togRL").classList.toggle("off", !rlOn);
+          var ptBtn = document.getElementById("togPT");
+          if (ptOn) {
+            ptBtn.style.background  = "#EAF3DE";
+            ptBtn.style.color       = "#27500A";
+            ptBtn.style.borderColor = "#C0DD97";
+            ptBtn.classList.remove("off");
+          }
+          document.getElementById("landing").style.display = "none";
+          renderWeek();
+        }
+      }, 200);
+    }
+  } catch(e) {}
 };
 </script>
 </body>
