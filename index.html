@@ -197,6 +197,78 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
 </style>
 </head>
 <body>
+  <!-- LANDING PAGE -->
+<div id="landing" style="
+  position:fixed; top:0; left:0; width:100%; height:100%; 
+  background:white; z-index:9999; display:flex; 
+  align-items:center; justify-content:center;">
+  <div style="max-width:380px; width:90%; padding:24px;">
+    
+    <div style="text-align:center; margin-bottom:28px;">
+      <div style="font-size:36px; margin-bottom:8px;">🏋️</div>
+      <div style="font-size:22px; font-weight:700; color:#4a86e8;">Coach Portal</div>
+      <div style="font-size:13px; color:#888; margin-top:4px;">What would you like to see?</div>
+    </div>
+
+    <div style="font-size:12px; font-weight:600; color:#666; 
+                text-transform:uppercase; letter-spacing:0.05em; margin-bottom:10px;">
+      Locations
+    </div>
+
+    <div id="landingOptions" style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
+      <label style="display:flex; align-items:center; gap:12px; padding:12px 14px;
+                    border:1.5px solid #e0e0e0; border-radius:8px; cursor:pointer;
+                    transition:border-color 0.15s;" id="lbl-gd">
+        <input type="checkbox" id="pref-gd" value="gd" onchange="landingToggle('gd')"
+               style="width:18px;height:18px;margin:0;accent-color:#4a86e8;">
+        <div>
+          <div style="font-weight:500;font-size:14px;">Guilderland</div>
+          <div style="font-size:11px;color:#888;">GD location classes</div>
+        </div>
+      </label>
+
+      <label style="display:flex; align-items:center; gap:12px; padding:12px 14px;
+                    border:1.5px solid #e0e0e0; border-radius:8px; cursor:pointer;
+                    transition:border-color 0.15s;" id="lbl-rl">
+        <input type="checkbox" id="pref-rl" value="rl" onchange="landingToggle('rl')"
+               style="width:18px;height:18px;margin:0;accent-color:#4a86e8;">
+        <div>
+          <div style="font-weight:500;font-size:14px;">Round Lake</div>
+          <div style="font-size:11px;color:#888;">RL location classes</div>
+        </div>
+      </label>
+
+      <label style="display:flex; align-items:center; gap:12px; padding:12px 14px;
+                    border:1.5px solid #e0e0e0; border-radius:8px; cursor:pointer;
+                    transition:border-color 0.15s;" id="lbl-pt">
+        <input type="checkbox" id="pref-pt" value="pt" onchange="landingToggle('pt')"
+               style="width:18px;height:18px;margin:0;accent-color:#4a86e8;">
+        <div>
+          <div style="font-weight:500;font-size:14px;">PT & On-Ramp</div>
+          <div style="font-size:11px;color:#888;">Personal training sessions</div>
+        </div>
+      </label>
+    </div>
+
+    <div id="landingMsg" style="font-size:12px;color:#e53935;margin-bottom:10px;
+                                 display:none;text-align:center;">
+      Please select at least one option.
+    </div>
+
+    <div id="landingStatus" style="font-size:11px;color:#aaa;text-align:center;
+                                    margin-bottom:12px;">
+      ⏳ Loading schedule data...
+    </div>
+
+    <button onclick="landingSubmit()" style="
+      width:100%; padding:14px; background:#4a86e8; color:white;
+      border:none; border-radius:8px; font-size:15px; font-weight:600;
+      cursor:pointer; transition:background 0.15s;">
+      View Schedule →
+    </button>
+
+  </div>
+</div>
 
 <nav class="nav">
   <div class="nav-title">🏋️ Coach Portal</div>
@@ -365,6 +437,8 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
 // ── IMPORTANT: Replace with your Apps Script /exec URL ──────────
 const API = "https://script.google.com/macros/s/AKfycbzFdUbF7vB3yHDdy1pqZG6Sqvwx5_8j9TMGCWqi7kYjYOtrQO8-yvzOn8EfbtzgmTXteg/exec";
 
+
+
 // ── Helpers ──────────────────────────────────────────────────────
 async function apiFetch(params) {
   const url = API + "?" + new URLSearchParams(params).toString();
@@ -436,6 +510,94 @@ function handleClassTypeChange() {
 }
 
 // ════════════════════════════════════════════════
+// LANDING PAGE
+// ════════════════════════════════════════════════
+function landingToggle(id) {
+  var checked = document.getElementById("pref-" + id).checked;
+  var lbl     = document.getElementById("lbl-" + id);
+  lbl.style.borderColor = checked ? "#4a86e8" : "#e0e0e0";
+  lbl.style.background  = checked ? "#f0f6ff" : "white";
+}
+
+function landingLoadPrefs() {
+  try {
+    var prefs = JSON.parse(localStorage.getItem("coachPortalPrefs") || "{}");
+    // Default: all locations checked if no prefs saved
+    var gdPref = prefs.gd !== undefined ? prefs.gd : true;
+    var rlPref = prefs.rl !== undefined ? prefs.rl : true;
+    var ptPref = prefs.pt !== undefined ? prefs.pt : false;
+    document.getElementById("pref-gd").checked = gdPref;
+    document.getElementById("pref-rl").checked = rlPref;
+    document.getElementById("pref-pt").checked = ptPref;
+    landingToggle("gd");
+    landingToggle("rl");
+    landingToggle("pt");
+  } catch(e) {}
+}
+
+function landingSavePrefs(gd, rl, pt) {
+  try {
+    localStorage.setItem("coachPortalPrefs", JSON.stringify({ gd, rl, pt }));
+  } catch(e) {}
+}
+
+var landingDataReady = false;
+
+async function landingSubmit() {
+  var gd = document.getElementById("pref-gd").checked;
+  var rl = document.getElementById("pref-rl").checked;
+  var pt = document.getElementById("pref-pt").checked;
+
+  if (!gd && !rl && !pt) {
+    document.getElementById("landingMsg").style.display = "block";
+    return;
+  }
+  document.getElementById("landingMsg").style.display = "none";
+
+  // Save preferences
+  landingSavePrefs(gd, rl, pt);
+
+  // Apply to schedule toggles
+  gdOn = gd;
+  rlOn = rl;
+  ptOn = pt;
+
+  // Update toggle button states to match
+  document.getElementById("togGD").classList.toggle("off", !gd);
+  document.getElementById("togRL").classList.toggle("off", !rl);
+  var ptBtn = document.getElementById("togPT");
+  if (pt) {
+    ptBtn.style.background  = "#EAF3DE";
+    ptBtn.style.color       = "#27500A";
+    ptBtn.style.borderColor = "#C0DD97";
+    ptBtn.classList.remove("off");
+  } else {
+    ptBtn.style.background  = "#f0f0f0";
+    ptBtn.style.color       = "#999";
+    ptBtn.style.borderColor = "#ddd";
+    ptBtn.classList.add("off");
+  }
+
+  // Wait for data if not ready yet
+  if (!landingDataReady) {
+    var btn = document.querySelector("#landing button");
+    btn.textContent = "Loading...";
+    btn.disabled    = true;
+    var attempts = 0;
+    while (!landingDataReady && attempts < 30) {
+      await new Promise(function(r) { setTimeout(r, 500); });
+      attempts++;
+    }
+    btn.textContent = "View Schedule →";
+    btn.disabled    = false;
+  }
+
+  // Hide landing page and show app
+  document.getElementById("landing").style.display = "none";
+  renderWeek();
+}
+
+// ════════════════════════════════════════════════
 // SCHEDULE
 // ════════════════════════════════════════════════
 var schedData = [], schedCoaches = [], schedWeeks = [], schedWeekIdx = 0;
@@ -447,15 +609,19 @@ var schedClassTypes = [];
 
 async function initSchedule() {
   try {
-    var result   = await apiFetch({ action: "getInitialData" });
+    var result      = await apiFetch({ action: "getInitialData" });
     schedData       = result.schedule    || [];
     schedCoaches    = result.coaches     || [];
     schedClassTypes = result.classTypes  || [];
     buildWeekList();
-    renderWeek();
+    landingDataReady = true;
+    // Update landing status
+    var status = document.getElementById("landingStatus");
+    if (status) status.textContent = "✅ Ready!";
   } catch(e) {
-    document.getElementById("calContainer").innerHTML =
-      "<div class='loading'>Error: " + e.message + "</div>";
+    landingDataReady = true; // don't block forever
+    var status = document.getElementById("landingStatus");
+    if (status) status.textContent = "⚠️ Error loading data";
   }
 }
 
@@ -1252,10 +1418,13 @@ function adRenderRecent() {
 // BOOT
 // ════════════════════════════════════════════════
 window.onload = function() {
+  landingLoadPrefs();
   initSchedule().then(function() {
     initAvailability();
   });
 };
 </script>
 </body>
+
+
 </html>
