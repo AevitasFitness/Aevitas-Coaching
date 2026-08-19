@@ -1129,11 +1129,17 @@ var totalsLoaded = false;
 
 function initReportControls() {
   // Populate coach dropdown
-  var sel = document.getElementById("rptCoach");
+    var sel = document.getElementById("rptCoach");
+  // Add OPEN slots option
+  var openOpt = document.createElement("option");
+  openOpt.value = "__open__"; openOpt.textContent = "⚠️ OPEN Slots";
+  sel.appendChild(openOpt);
+  // Add divider
+  var div = document.createElement("option");
+  div.disabled = true; div.textContent = "──────────";
+  sel.appendChild(div);
   schedCoaches.forEach(function(n) {
-    var o = document.createElement("option");
-    o.value = o.textContent = n;
-    sel.appendChild(o);
+    var o = document.createElement("option"); o.value = o.textContent = n; sel.appendChild(o);
   });
 
   // Populate month dropdown from schedData
@@ -1180,19 +1186,109 @@ function renderReport() {
   var coach    = document.getElementById("rptCoach").value;
   var monthKey = document.getElementById("rptMonth").value;
   if (!monthKey) return;
-
   var parts = monthKey.split("-");
-  var year  = parseInt(parts[0]);
-  var month = parseInt(parts[1]) - 1; // 0-indexed
+  var year  = parseInt(parts[0]), month = parseInt(parts[1]) - 1;
+
+  if (coach === "__open__") {
+    renderOpenSlots(year, month);
+    return;
+  }
 
   var coaches = coach === "__all__" ? schedCoaches : [coach];
-  var html    = "";
+  var html = "";
+  coaches.forEach(function(c) { html += buildCoachReport(c, year, month); });
+  document.getElementById("rptContainer").innerHTML = 
+    html || "<div class='loading'>No data for this period.</div>";
+}
 
-  coaches.forEach(function(c) {
-    html += buildCoachReport(c, year, month);
+function renderOpenSlots(year, month) {
+  var firstDay = new Date(year, month, 1);
+  var lastDay  = new Date(year, month + 1, 0);
+  var monthName = firstDay.toLocaleDateString("en-US", { month:"long", year:"numeric" });
+  var today    = fmtDate(new Date());
+
+  var openData = schedData.filter(function(r) {
+    if (r.coach !== "OPEN") return false;
+    var d = new Date(r.date + "T12:00:00");
+    return d.getFullYear() === year && d.getMonth() === month;
   });
 
-  document.getElementById("rptContainer").innerHTML = html || "<div class='loading'>No data for this period.</div>";
+  if (!openData.length) {
+    document.getElementById("rptContainer").innerHTML =
+      "<div class='rpt-wrap'><div class='rpt-title'><span>⚠️ OPEN Slots</span>" +
+      "<span>" + monthName + "</span></div>" +
+      "<div style='padding:20px;text-align:center;color:#888;font-size:14px'>" +
+      "✅ No open slots this month!</div></div>";
+    return;
+  }
+
+  // Group by date
+  var byDate = {};
+  openData.forEach(function(r) {
+    if (!byDate[r.date]) byDate[r.date] = [];
+    byDate[r.date].push(r);
+  });
+
+  var startOffset = firstDay.getDay() - 1;
+  if (startOffset < 0) startOffset = 6;
+
+  var html = "<div class='rpt-wrap'>";
+  html += "<div class='rpt-title' style='background:#e53935'>" +
+          "<span>⚠️ OPEN Slots — " + openData.length + " total</span>" +
+          "<span>" + monthName + "</span></div>";
+  html += "<div class='rpt-grid'>";
+
+  ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].forEach(function(d) {
+    html += "<div class='rpt-dname'>" + d + "</div>";
+  });
+
+  for (var i = 0; i < startOffset; i++) html += "<div class='rpt-day other'></div>";
+
+  for (var d = 1; d <= lastDay.getDate(); d++) {
+    var dateStr = year + "-" + String(month+1).padStart(2,"0") + "-" + String(d).padStart(2,"0");
+    var slots   = byDate[dateStr] || [];
+    var isToday = dateStr === today;
+
+    html += "<div class='rpt-day" + (isToday ? " today-r" : "") + 
+            (slots.length ? "' style='background:#fff5f5" : "") + "'>";
+    html += "<div class='rpt-daynum" + (slots.length ? " has-classes" : "") + 
+            "' style='" + (slots.length ? "color:#e53935;font-weight:700" : "") + "'>" + d + "</div>";
+    slots.forEach(function(slot) {
+      var locClass = slot.location === "Guilderland" ? "gd" : "rl";
+      html += "<div class='rpt-class " + locClass + "' style='background:#FCEBEB;color:#A32D2D'>" +
+              slot.timeDisplay + " · " + slot.classType + " · " + 
+              (slot.location === "Guilderland" ? "GD" : "RL") + "</div>";
+    });
+    html += "</div>";
+  }
+
+  var rem = (startOffset + lastDay.getDate()) % 7;
+  if (rem > 0) for (var j = 0; j < 7 - rem; j++) html += "<div class='rpt-day other'></div>";
+
+  html += "</div>";
+
+  // List view below calendar
+  html += "<div class='rpt-totals'>";
+  html += "<div class='rpt-totals-title'>All Open Slots</div>";
+  html += "<div style='display:flex;flex-direction:column;gap:6px;'>";
+  Object.keys(byDate).sort().forEach(function(dateStr) {
+    var slots = byDate[dateStr];
+    var d     = new Date(dateStr + "T12:00:00");
+    var dayLbl = d.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
+    slots.forEach(function(slot) {
+      html += "<div style='display:flex;justify-content:space-between;padding:6px 0;" +
+              "border-bottom:0.5px solid #f0f0f0;font-size:12px'>" +
+              "<span style='font-weight:500'>" + dayLbl + "</span>" +
+              "<span>" + slot.timeDisplay + "</span>" +
+              "<span>" + slot.classType + "</span>" +
+              "<span class='head-loc " + (slot.location === "Guilderland" ? "gd" : "rl") + "'>" +
+              (slot.location === "Guilderland" ? "GD" : "RL") + "</span>" +
+              "</div>";
+    });
+  });
+  html += "</div></div></div>";
+
+  document.getElementById("rptContainer").innerHTML = html;
 }
 
 function buildCoachReport(coach, year, month) {
