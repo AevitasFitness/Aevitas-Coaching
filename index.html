@@ -193,7 +193,7 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
   .rpt-wrap { break-inside: avoid; margin-bottom: 24px;
               border: 1px solid #ccc !important; }
 }
-}
+
 </style>
 </head>
 <body>
@@ -606,6 +606,9 @@ var ptOn = false;
 var DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
 var LOCS = ["Guilderland","Round Lake"];
 var schedClassTypes = [];
+var schedBlackouts    = [];
+var schedAvailability = { header: [], rows: [] };
+var schedCertMap      = {};
 
 async function initSchedule() {
   try {
@@ -653,6 +656,17 @@ async function initSchedule() {
     landingDataReady = true;
     var status = document.getElementById("landingStatus");
     if (status) status.textContent = "⚠️ Error loading data";
+  }
+}
+
+async function initAvailabilityData() {
+  try {
+    var avResult      = await apiFetch({ action: "getAvailabilityData" });
+    schedBlackouts    = avResult.blackouts    || [];
+    schedAvailability = avResult.availability || { header: [], rows: [] };
+    schedCertMap      = avResult.certMap      || {};
+  } catch(e) {
+    console.log("Availability data load failed:", e.message);
   }
 }
 
@@ -824,24 +838,52 @@ async function doUpdateCoach(rowIndex, newCoach, sel) {
 
 async function handleSlotAction(rowIndex, value, sel) {
   if (!value) return;
+
+  // Check for blackout warning
+  if (value !== "__delete__" && value !== "OPEN") {
+    var slot = schedData.find(function(r) { return r.rowIndex === rowIndex; });
+    if (slot && schedBlackouts && schedBlackouts.length) {
+      var parts  = slot.time.split(":");
+      var classT = parseInt(parts[0]) * 100 + parseInt(parts[1]);
+      var blocked = schedBlackouts.some(function(b) {
+        if (b.coach.toLowerCase() !== value.toLowerCase()) return false;
+        if (slot.date < b.startDate || slot.date > b.endDate) return false;
+        var bt = b.type;
+        if (bt === "full day") return true;
+        if (bt === "available full day") return false;
+        var ws = b.startTime, we = b.endTime;
+        if (bt === "available only during time window" ||
+            bt === "available during time window") {
+          if (!ws && !we) return false;
+          return classT < ws || classT >= we;
+        }
+        if (bt === "unavailable during time window") {
+          return classT >= ws && classT < we;
+        }
+        return false;
+      });
+      if (blocked) {
+        var proceed = confirm("⚠️ " + value + " has a blackout during this time slot.\n\n" +
+          "Do you still want to assign them?");
+        if (!proceed) {
+          sel.value = "";
+          return;
+        }
+      }
+    }
+  }
+
   if (value === "__delete__") {
     if (!confirm("Delete this class from the schedule permanently?")) {
       sel.value = ""; return;
     }
     try {
       await apiPost({ action: "deleteClass", rowIndex: rowIndex });
-      // Remove from local schedData
       schedData = schedData.filter(function(r) { return r.rowIndex !== rowIndex; });
-      // Fix rowIndex for all rows after the deleted one
-      schedData.forEach(function(r) {
-        if (r.rowIndex > rowIndex) r.rowIndex--;
-      });
+      schedData.forEach(function(r) { if (r.rowIndex > rowIndex) r.rowIndex--; });
       showToast("Class deleted");
       renderWeek();
-    } catch(e) {
-      showToast("Error deleting");
-      sel.value = "";
-    }
+    } catch(e) { showToast("Error deleting"); sel.value = ""; }
   } else {
     doUpdateCoach(rowIndex, value, sel);
   }
@@ -1570,8 +1612,9 @@ window.onload = function() {
     }
   } catch(e) {}
 
-  initSchedule().then(function() {
+    initSchedule().then(function() {
     initAvailability();
+    initAvailabilityData(); // load blackouts in background for dropdown warnings
   });
 };
 </script>
