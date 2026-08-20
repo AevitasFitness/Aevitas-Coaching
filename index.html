@@ -40,6 +40,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 .tog-gd.off  { background: #f0f0f0; color: #999; border-color: #ddd; }
 .tog-rl      { background: #E1F5EE; color: #0F6E56; border-color: #5DCAA5; }
 .tog-rl.off  { background: #f0f0f0; color: #999; border-color: #ddd; }
+.tog-ftp      { background: #FEF3E2; color: #8B4513; border-color: #F4A460; }
+.tog-ftp.off  { background: #f0f0f0; color: #999; border-color: #ddd; }
+
 .cal-outer { overflow-x: auto; }
 .cal { border: 0.5px solid #ddd; border-radius: 10px; overflow: hidden;
        background: white; min-width: 800px; }
@@ -53,6 +56,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 .head-loc { font-size: 9px; font-weight: 500; padding: 1px 5px; border-radius: 3px; }
 .head-loc.gd { background: #E6F1FB; color: #185FA5; }
 .head-loc.rl { background: #E1F5EE; color: #0F6E56; }
+.head-loc.ftp { background: #FEF3E2; color: #8B4513; }
 .cal-outer { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .cal-row, .cal-head { align-items: stretch; }
 .chip { word-break: break-word; }
@@ -69,6 +73,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 .chip-swap  { font-size: 8px; font-weight: 500; color: #854F0B; margin-top: 1px; }
 .gd-chip   { background: #E6F1FB; color: #0C447C; }
 .rl-chip   { background: #E1F5EE; color: #085041; }
+.ftp-chip     { background: #FEF3E2; color: #8B4513; }
 .wl-chip   { background: #EEEDFE; color: #3C3489; }
 .vf-chip   { background: #EAF3DE; color: #27500A; }
 .og-chip   { background: #FAEEDA; color: #633806; }
@@ -238,6 +243,17 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
         </div>
       </label>
 
+            <label style="display:flex; align-items:center; gap:12px; padding:12px 14px;
+                    border:1.5px solid #e0e0e0; border-radius:8px; cursor:pointer;
+                    transition:border-color 0.15s;" id="lbl-ftp">
+        <input type="checkbox" id="pref-ftp" value="ftp" onchange="landingToggle('ftp')"
+               style="width:18px;height:18px;margin:0;accent-color:#4a86e8;">
+        <div>
+          <div style="font-weight:500;font-size:14px;">Colonie</div>
+          <div style="font-size:11px;color:#888;">FTP location classes</div>
+        </div>
+      </label>
+
       <label style="display:flex; align-items:center; gap:12px; padding:12px 14px;
                     border:1.5px solid #e0e0e0; border-radius:8px; cursor:pointer;
                     transition:border-color 0.15s;" id="lbl-pt">
@@ -291,6 +307,7 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
     <div class="loc-toggles">
       <button class="tog tog-gd" id="togGD" onclick="toggleLoc('gd')">Guilderland</button>
       <button class="tog tog-rl" id="togRL" onclick="toggleLoc('rl')">Round Lake</button>
+      <button class="tog tog-ftp" id="togFTP" onclick="toggleLoc('ftp')">Colonie</button>
       <button class="tog off" id="togPT"
               onclick="togglePT()"
               style="background:#f0f0f0;color:#999;border-color:#ddd;">PT & On-Ramp</button>
@@ -304,6 +321,7 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
   <div class="legend" id="legend">
     <div class="li"><div class="ld" style="background:#E6F1FB;border:1px solid #85B7EB"></div>Guilderland</div>
     <div class="li"><div class="ld" style="background:#E1F5EE;border:1px solid #5DCAA5"></div>Round Lake</div>
+    <div class="li"><div class="ld" style="background:#FEF3E2;border:1px solid #F4A460"></div>Colonie</div>
     <div class="li"><div class="ld" style="background:#EAF3DE;border:1px solid #C0DD97"></div>ViTaFIT</div>
     <div class="li"><div class="ld" style="background:#EEEDFE;border:1px solid #CECBF6"></div>Weightlifting</div>
     <div class="li"><div class="ld" style="background:#FAEEDA;border:1px solid #FAC775"></div>Open Gym</div>
@@ -399,6 +417,7 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
       <option value="">— Select location —</option>
       <option value="Guilderland">Guilderland</option>
       <option value="Round Lake">Round Lake</option>
+      <option value="Colonie">Colonie</option>
     </select>
 
     <label class="field-label">Class Type</label>
@@ -525,12 +544,15 @@ function landingLoadPrefs() {
     // Default: all locations checked if no prefs saved
     var gdPref = prefs.gd !== undefined ? prefs.gd : true;
     var rlPref = prefs.rl !== undefined ? prefs.rl : true;
+    var ftpPref = prefs.ftp !== undefined ? prefs.ftp : true;
     var ptPref = prefs.pt !== undefined ? prefs.pt : false;
     document.getElementById("pref-gd").checked = gdPref;
     document.getElementById("pref-rl").checked = rlPref;
+    document.getElementById("pref-ftp").checked = ftpPref;
     document.getElementById("pref-pt").checked = ptPref;
     landingToggle("gd");
     landingToggle("rl");
+    landingToggle("ftp");
     landingToggle("pt");
   } catch(e) {}
 }
@@ -546,25 +568,28 @@ var landingDataReady = false;
 async function landingSubmit() {
   var gd = document.getElementById("pref-gd").checked;
   var rl = document.getElementById("pref-rl").checked;
+  var ftp = document.getElementById("pref-ftp").checked;
   var pt = document.getElementById("pref-pt").checked;
 
-  if (!gd && !rl && !pt) {
+  if (!gd && !rl && !ftp && !pt) {
     document.getElementById("landingMsg").style.display = "block";
     return;
   }
   document.getElementById("landingMsg").style.display = "none";
 
   // Save preferences
-  landingSavePrefs(gd, rl, pt);
+  landingSavePrefs(gd, rl, ftp, pt);
 
   // Apply to schedule toggles
   gdOn = gd;
   rlOn = rl;
+  ftpOn = ftp;
   ptOn = pt;
 
   // Update toggle button states to match
   document.getElementById("togGD").classList.toggle("off", !gd);
   document.getElementById("togRL").classList.toggle("off", !rl);
+  document.getElementById("togFTP").classList.toggle("off", !ftp);
   var ptBtn = document.getElementById("togPT");
   if (pt) {
     ptBtn.style.background  = "#EAF3DE";
@@ -601,10 +626,11 @@ async function landingSubmit() {
 // SCHEDULE
 // ════════════════════════════════════════════════
 var schedData = [], schedCoaches = [], schedWeeks = [], schedWeekIdx = 0;
-var gdOn = true, rlOn = true;
+var gdOn = true, rlOn = true; 
+var ftpOn = true;
 var ptOn = false;
 var DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
-var LOCS = ["Guilderland","Round Lake"];
+var LOCS = ["Guilderland","Round Lake", "Colonie"];
 var schedClassTypes = [];
 var schedBlackouts    = [];
 var schedAvailability = { header: [], rows: [] };
@@ -694,13 +720,9 @@ function changeWeek(dir) {
 }
 
 function toggleLoc(loc) {
-  if (loc === "gd") {
-    gdOn = !gdOn;
-    document.getElementById("togGD").classList.toggle("off", !gdOn);
-  } else {
-    rlOn = !rlOn;
-    document.getElementById("togRL").classList.toggle("off", !rlOn);
-  }
+  if (loc === "gd")  { gdOn  = !gdOn;  document.getElementById("togGD").classList.toggle("off", !gdOn); }
+  else if (loc === "rl")  { rlOn  = !rlOn;  document.getElementById("togRL").classList.toggle("off", !rlOn); }
+  else if (loc === "ftp") { ftpOn = !ftpOn; document.getElementById("togFTP").classList.toggle("off", !ftpOn); }
   renderWeek();
 }
 
@@ -744,7 +766,9 @@ function renderWeek() {
   wkData.forEach(function(r) { timeSet[r.time] = r.timeDisplay; });
   var times = Object.keys(timeSet).sort();
 
-  var visLocs = LOCS.filter(function(l, i) { return (i === 0 && gdOn) || (i === 1 && rlOn); });
+    var visLocs = LOCS.filter(function(l, i) {
+    return (i === 0 && gdOn) || (i === 1 && rlOn) || (i === 2 && ftpOn);
+  });
   if (!visLocs.length) {
     document.getElementById("calContainer").innerHTML =
       "<div class='loading'>Select at least one location.</div>";
@@ -772,9 +796,10 @@ function renderWeek() {
     h += "<div class='head-day-name'>" + day.slice(0,3) + " " +
          date.toLocaleDateString("en-US",{month:"short"}) + " " + date.getDate() + "</div>";
     h += "<div class='head-locs'>" +
-         visLocs.map(function(l) {
-           return "<span class='head-loc " + (l==="Guilderland"?"gd":"rl") + "'>" +
-                  (l==="Guilderland"?"GD":"RL") + "</span>";
+        visLocs.map(function(l) {
+           var cls = l==="Guilderland" ? "gd" : l==="Round Lake" ? "rl" : "ftp";
+           var lbl = l==="Guilderland" ? "GD" : l==="Round Lake" ? "RL" : "FTP";
+           return "<span class='head-loc " + cls + "'>" + lbl + "</span>";
          }).join("") + "</div>";
     h += "</div>";
   });
@@ -898,7 +923,7 @@ function getChipClass(ct, loc) {
   if (c === "onramp")             return "or-chip";
   if (c === "personal training")  return "pt-chip";
   if (c === "gym rental")  return "pt-chip";
-  return loc === "Guilderland" ? "gd-chip" : "rl-chip";
+  return loc === "Guilderland" ? "gd-chip" : loc === "Round Lake" ? "rl-chip" : "ftp-chip";
 }
 
 // ════════════════════════════════════════════════
@@ -1597,9 +1622,11 @@ window.onload = function() {
       // Apply prefs immediately
       gdOn = prefs.gd !== undefined ? prefs.gd : true;
       rlOn = prefs.rl !== undefined ? prefs.rl : true;
+      ftpOn = prefs.ftp !== undefined ? prefs.ftp : true;
       ptOn = prefs.pt !== undefined ? prefs.pt : false;
       document.getElementById("togGD").classList.toggle("off", !gdOn);
       document.getElementById("togRL").classList.toggle("off", !rlOn);
+      document.getElementById("togFTP").classList.toggle("off", !ftpOn);
       var ptBtn = document.getElementById("togPT");
       if (ptOn) {
         ptBtn.style.background  = "#EAF3DE";
