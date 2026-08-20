@@ -1386,10 +1386,10 @@ function renderOpenSlots(year, month) {
     html += "<div class='rpt-daynum" + (slots.length ? " has-classes" : "") + 
             "' style='" + (slots.length ? "color:#e53935;font-weight:700" : "") + "'>" + d + "</div>";
     slots.forEach(function(slot) {
-      var locClass = slot.location === "Guilderland" ? "gd" : "rl";
+      var locClass = slot.location === "Guilderland" ? "gd" : slot.location === "Round Lake" ? "rl" : "ftp";
       html += "<div class='rpt-class " + locClass + "' style='background:#FCEBEB;color:#A32D2D'>" +
               slot.timeDisplay + " · " + slot.classType + " · " + 
-              (slot.location === "Guilderland" ? "GD" : "RL") + "</div>";
+              (slot.location === "Guilderland" ? "GD" : slot.location === "Round Lake" ? "RL" : "FTP") + "</div>";
     });
     html += "</div>";
   }
@@ -1483,8 +1483,8 @@ function buildCoachReport(coach, year, month) {
             (hasClass ? " has-classes" : "") + "'>" + d + "</div>";
 
     classes.forEach(function(cls) {
-      var locClass = cls.location === "Guilderland" ? "gd" : "rl";
-      var locLabel = cls.location === "Guilderland" ? "GD" : "RL";
+      var locClass = cls.location === "Guilderland" ? "gd" : cls.location === "Round Lake" ? "rl" : "ftp";
+      var locLabel = cls.location === "Guilderland" ? "GD" : cls.location === "Round Lake" ? "RL" : "FTP";
       html += "<div class='rpt-class " + locClass + "'>" +
               cls.classType + " · " + locLabel + "</div>";
     });
