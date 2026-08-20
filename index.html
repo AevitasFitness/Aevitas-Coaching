@@ -106,6 +106,10 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
 .mday.range-d { background: #c5d8fb; }
 .mday.rstart  { background: #4a86e8; color: white; }
 .mday.rend    { background: #4a86e8; color: white; }
+.mday.default-available    { background: #e8f5e9; border-color: #a5d6a7; }
+.mday.default-available_am { background: #e3f2fd; border-color: #90caf9; }
+.mday.default-available_pm { background: #fffde7; border-color: #fff176; }
+.mday.default-unavailable  { background: #ffebee; border-color: #ef9a9a; }
 .mday.has-unavailable  { border-color: #e53935; background: #fff5f5; }
 .mday.has-available_am { border-color: #1a73e8; background: #f0f6ff; }
 .mday.has-available_pm { border-color: #f9ab00; background: #fffde7; }
@@ -350,18 +354,33 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
       </div>
       <div class="mini-grid" id="avGrid"></div>
       <p class="hint">Click a day or drag to select a range.</p>
-      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;">
-        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#555;">
-          <div style="width:14px;height:14px;border-radius:3px;background:#f1f8f1;border:2px solid #43a047;flex-shrink:0"></div>Available all day
+            <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;">
+        <div style="font-size:11px;color:#888;width:100%;font-weight:500;">
+          Faded = general availability &nbsp;|&nbsp; Bold border = specific submission
         </div>
         <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#555;">
-          <div style="width:14px;height:14px;border-radius:3px;background:#fff5f5;border:2px solid #e53935;flex-shrink:0"></div>Not available
+          <div style="width:14px;height:14px;border-radius:3px;background:#e8f5e9;border:2px solid #a5d6a7;flex-shrink:0"></div>Available all day
         </div>
         <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#555;">
-          <div style="width:14px;height:14px;border-radius:3px;background:#f0f6ff;border:2px solid #1a73e8;flex-shrink:0"></div>Available AM only
+          <div style="width:14px;height:14px;border-radius:3px;background:#ffebee;border:2px solid #ef9a9a;flex-shrink:0"></div>Not available
         </div>
         <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#555;">
-          <div style="width:14px;height:14px;border-radius:3px;background:#fffde7;border:2px solid #f9ab00;flex-shrink:0"></div>Available PM only
+          <div style="width:14px;height:14px;border-radius:3px;background:#e3f2fd;border:2px solid #90caf9;flex-shrink:0"></div>Available AM only
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#555;">
+          <div style="width:14px;height:14px;border-radius:3px;background:#fffde7;border:2px solid #fff176;flex-shrink:0"></div>Available PM only
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#555;">
+          <div style="width:14px;height:14px;border-radius:3px;background:#f1f8f1;border:2px solid #43a047;flex-shrink:0"></div>Specific: Available all day
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#555;">
+          <div style="width:14px;height:14px;border-radius:3px;background:#fff5f5;border:2px solid #e53935;flex-shrink:0"></div>Specific: Unavailable
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#555;">
+          <div style="width:14px;height:14px;border-radius:3px;background:#f0f6ff;border:2px solid #1a73e8;flex-shrink:0"></div>Specific: AM only
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#555;">
+          <div style="width:14px;height:14px;border-radius:3px;background:#fffde7;border:2px solid #f9ab00;flex-shrink:0"></div>Specific: PM only
         </div>
       </div>
     </div>
@@ -992,18 +1011,64 @@ function avRenderCal() {
     }
   }
 }
+function getCoachDefaultAvailability(coach, dateStr) {
+  if (!schedAvailability || !schedAvailability.header || !schedAvailability.header.length) return null;
+  
+  var d       = new Date(dateStr + "T12:00:00");
+  var days    = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  var dayAbbr = days[d.getDay()];
+  
+  var amBlocks = ["Early AM", "Late AM"];
+  var pmBlocks = ["Evening", "Late Evening", "Midday"];
+  
+  var hasAM = false, hasPM = false;
+  
+  // Check each location row for this coach
+  schedAvailability.rows.forEach(function(row) {
+    if ((row[0] || "").trim().toLowerCase() !== coach.toLowerCase()) return;
+    
+    amBlocks.forEach(function(block) {
+      var colName = dayAbbr + " " + block;
+      var colIdx  = schedAvailability.header.indexOf(colName);
+      if (colIdx === -1) return;
+      var val = (row[colIdx] || "").toString().trim().toUpperCase();
+      if (val === "YES" || val === "TRUE" || val === "Y") hasAM = true;
+    });
+    
+    pmBlocks.forEach(function(block) {
+      var colName = dayAbbr + " " + block;
+      var colIdx  = schedAvailability.header.indexOf(colName);
+      if (colIdx === -1) return;
+      var val = (row[colIdx] || "").toString().trim().toUpperCase();
+      if (val === "YES" || val === "TRUE" || val === "Y") hasPM = true;
+    });
+  });
+  
+  if (hasAM && hasPM)  return "default-available";
+  if (hasAM)           return "default-available_am";
+  if (hasPM)           return "default-available_pm";
+  return "default-unavailable";
+}
 
 function avMakeDayEl(date, other) {
   var el = document.createElement("div");
-  el.className = "mday";
-  el.textContent = date.getDate();
-  el.dataset.date = fmtDate(date);
+  el.className = "mday"; el.textContent = date.getDate(); el.dataset.date = fmtDate(date);
   if (other) el.classList.add("other");
   var today = new Date(); today.setHours(0,0,0,0);
   if (date.getTime() === today.getTime()) el.classList.add("today-d");
+  
   var sub = avGetSub(date);
-  if (sub) el.classList.add("has-" + avNorm(sub.type, sub.startTime, sub.endTime));
+  if (sub) {
+    // Specific blackout submission — show solid color
+    el.classList.add("has-" + avNorm(sub.type, sub.startTime, sub.endTime));
+  } else if (!other && avCoach) {
+    // No submission — show faded default availability
+    var defaultClass = getCoachDefaultAvailability(avCoach, fmtDate(date));
+    if (defaultClass) el.classList.add(defaultClass);
+  }
+  
   avApplyRange(el, date);
+
   el.addEventListener("mousedown", function(e) {
     avDragging = true; avStart = new Date(date); avEnd = new Date(date);
     avRenderCal(); e.preventDefault();
