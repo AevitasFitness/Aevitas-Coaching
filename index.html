@@ -1390,6 +1390,7 @@ function renderOpenSlots(year, month) {
     var dateStr = year + "-" + String(month+1).padStart(2,"0") + "-" + String(d).padStart(2,"0");
     var isToday = dateStr === today;
     var classes = dayMap[dateStr] || [];
+    if (classes.length) console.log("date:", dateStr, "classes:", classes.length, classes[0]);
 
     // Split into time sections
         var morning = [], midday = [], evening = [];
