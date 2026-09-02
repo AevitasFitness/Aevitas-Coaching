@@ -1480,6 +1480,7 @@ function buildCoachReport(coach, year, month) {
     dayMap[r.date].push({ classType: r.classType, location: r.location, time: r.time });
     totals[r.classType] = (totals[r.classType] || 0) + (r.hours || 1);
   });
+    console.log("dayMap keys:", Object.keys(dayMap).length, "first key:", Object.keys(dayMap)[0]);
 
   // Build monthly totals
   var totals = {};
