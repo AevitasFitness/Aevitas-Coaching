@@ -1392,9 +1392,10 @@ function renderOpenSlots(year, month) {
     var classes = dayMap[dateStr] || [];
 
     // Split into time sections
-    var morning = [], midday = [], evening = [];
+        var morning = [], midday = [], evening = [];
     classes.forEach(function(cls) {
       var t = cls.time ? parseInt(cls.time.replace(":", "")) : 0;
+      console.log(cls.classType, cls.time, t);
       if (t >= 1200 && t < 1600)      midday.push(cls);
       else if (t >= 1600)              evening.push(cls);
       else                             morning.push(cls);
