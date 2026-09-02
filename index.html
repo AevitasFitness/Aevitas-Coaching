@@ -1386,52 +1386,20 @@ function renderOpenSlots(year, month) {
 
   for (var i = 0; i < startOffset; i++) html += "<div class='rpt-day other'></div>";
 
-    for (var d = 1; d <= lastDay.getDate(); d++) {
+  for (var d = 1; d <= lastDay.getDate(); d++) {
     var dateStr = year + "-" + String(month+1).padStart(2,"0") + "-" + String(d).padStart(2,"0");
     var isToday = dateStr === today;
-    var classes = dayMap[dateStr] || [];
-    if (classes.length) console.log("date:", dateStr, "classes:", classes.length, classes[0]);
-
-    // Split into time sections
-        var morning = [], midday = [], evening = [];
-    classes.forEach(function(cls) {
-      var t = cls.time ? parseInt(cls.time.replace(":", "")) : 0;
-      console.log(cls.classType, cls.time, t);
-      if (t >= 1200 && t < 1600)      midday.push(cls);
-      else if (t >= 1600)              evening.push(cls);
-      else                             morning.push(cls);
+    var slots   = byDate[dateStr] || [];
+    html += "<div class='rpt-day" + (isToday ? " today-r" : "") +
+            (slots.length ? "' style='background:#fff5f5" : "") + "'>";
+    html += "<div class='rpt-daynum" + (slots.length ? " has-classes" : "") +
+            "' style='" + (slots.length ? "color:#e53935;font-weight:700" : "") + "'>" + d + "</div>";
+    slots.forEach(function(slot) {
+      var locClass = slot.location === "Guilderland" ? "gd" : slot.location === "Round Lake" ? "rl" : "ftp";
+      html += "<div class='rpt-class " + locClass + "' style='background:#FCEBEB;color:#A32D2D'>" +
+              slot.timeDisplay + " · " + slot.classType + " · " +
+              (slot.location === "Guilderland" ? "GD" : slot.location === "Round Lake" ? "RL" : "FTP") + "</div>";
     });
-
-    html += "<div class='rpt-day" + (isToday ? " today-r" : "") + "'>";
-    html += "<div class='rpt-daynum" + (classes.length ? " has-classes" : "") + "'>" + d + "</div>";
-
-    // Morning section
-    html += "<div class='rpt-section'>";
-    morning.forEach(function(cls) {
-      var lc = cls.location === "Guilderland" ? "gd" : cls.location === "Round Lake" ? "rl" : "ftp";
-      var ll = cls.location === "Guilderland" ? "GD" : cls.location === "Round Lake" ? "RL" : "FTP";
-      html += "<div class='rpt-class " + lc + "'>" + cls.classType + " · " + ll + "</div>";
-    });
-    html += "</div>";
-
-    // Midday section
-    html += "<div class='rpt-section rpt-section-mid'>";
-    midday.forEach(function(cls) {
-      var lc = cls.location === "Guilderland" ? "gd" : cls.location === "Round Lake" ? "rl" : "ftp";
-      var ll = cls.location === "Guilderland" ? "GD" : cls.location === "Round Lake" ? "RL" : "FTP";
-      html += "<div class='rpt-class " + lc + "'>" + cls.classType + " · " + ll + "</div>";
-    });
-    html += "</div>";
-
-    // Evening section
-    html += "<div class='rpt-section rpt-section-eve'>";
-    evening.forEach(function(cls) {
-      var lc = cls.location === "Guilderland" ? "gd" : cls.location === "Round Lake" ? "rl" : "ftp";
-      var ll = cls.location === "Guilderland" ? "GD" : cls.location === "Round Lake" ? "RL" : "FTP";
-      html += "<div class='rpt-class " + lc + "'>" + cls.classType + " · " + ll + "</div>";
-    });
-    html += "</div>";
-
     html += "</div>";
   }
 
@@ -1471,20 +1439,12 @@ function buildCoachReport(coach, year, month) {
     var d = new Date(r.date + "T12:00:00");
     return d.getFullYear() === year && d.getMonth() === month;
   });
-  console.log("coach:", coach, "year:", year, "month:", month, "monthData:", monthData.length);
   var dayMap = {}, totals = {};
 
   // Build day map: dateStr → [{ classType, location }]
   monthData.forEach(function(r) {
     if (!dayMap[r.date]) dayMap[r.date] = [];
     dayMap[r.date].push({ classType: r.classType, location: r.location, time: r.time });
-    totals[r.classType] = (totals[r.classType] || 0) + (r.hours || 1);
-  });
-    console.log("dayMap keys:", Object.keys(dayMap).length, "first key:", Object.keys(dayMap)[0]);
-
-  // Build monthly totals
-  var totals = {};
-  monthData.forEach(function(r) {
     totals[r.classType] = (totals[r.classType] || 0) + (r.hours || 1);
   });
 
@@ -1514,28 +1474,47 @@ function buildCoachReport(coach, year, month) {
 
   // Day cells
   for (var d = 1; d <= lastDay.getDate(); d++) {
-    var dateStr  = year + "-" +
-                   String(month+1).padStart(2,"0") + "-" +
-                   String(d).padStart(2,"0");
-    var isToday  = dateStr === today;
-    var classes  = dayMap[dateStr] || [];
-    var hasClass = classes.length > 0;
+    var dateStr = year + "-" + String(month+1).padStart(2,"0") + "-" + String(d).padStart(2,"0");
+    var isToday = dateStr === today;
+    var classes = dayMap[dateStr] || [];
 
-    html += "<div class='rpt-day" +
-            (isToday ? " today-r" : "") + "'>";
-    html += "<div class='rpt-daynum" +
-            (hasClass ? " has-classes" : "") + "'>" + d + "</div>";
-
+    var morning = [], midday = [], evening = [];
     classes.forEach(function(cls) {
-      var locClass = cls.location === "Guilderland" ? "gd" : cls.location === "Round Lake" ? "rl" : "ftp";
-      var locLabel = cls.location === "Guilderland" ? "GD" : cls.location === "Round Lake" ? "RL" : "FTP";
-      html += "<div class='rpt-class " + locClass + "'>" +
-              cls.classType + " · " + locLabel + "</div>";
+      var t = cls.time ? parseInt(cls.time.replace(":", "")) : 0;
+      if (t >= 1200 && t < 1600)  midday.push(cls);
+      else if (t >= 1600)          evening.push(cls);
+      else                         morning.push(cls);
     });
+
+    html += "<div class='rpt-day" + (isToday ? " today-r" : "") + "'>";
+    html += "<div class='rpt-daynum" + (classes.length ? " has-classes" : "") + "'>" + d + "</div>";
+
+    html += "<div class='rpt-section'>";
+    morning.forEach(function(cls) {
+      var lc = cls.location === "Guilderland" ? "gd" : cls.location === "Round Lake" ? "rl" : "ftp";
+      var ll = cls.location === "Guilderland" ? "GD" : cls.location === "Round Lake" ? "RL" : "FTP";
+      html += "<div class='rpt-class " + lc + "'>" + cls.classType + " · " + ll + "</div>";
+    });
+    html += "</div>";
+
+    html += "<div class='rpt-section rpt-section-mid'>";
+    midday.forEach(function(cls) {
+      var lc = cls.location === "Guilderland" ? "gd" : cls.location === "Round Lake" ? "rl" : "ftp";
+      var ll = cls.location === "Guilderland" ? "GD" : cls.location === "Round Lake" ? "RL" : "FTP";
+      html += "<div class='rpt-class " + lc + "'>" + cls.classType + " · " + ll + "</div>";
+    });
+    html += "</div>";
+
+    html += "<div class='rpt-section rpt-section-eve'>";
+    evening.forEach(function(cls) {
+      var lc = cls.location === "Guilderland" ? "gd" : cls.location === "Round Lake" ? "rl" : "ftp";
+      var ll = cls.location === "Guilderland" ? "GD" : cls.location === "Round Lake" ? "RL" : "FTP";
+      html += "<div class='rpt-class " + lc + "'>" + cls.classType + " · " + ll + "</div>";
+    });
+    html += "</div>";
 
     html += "</div>";
   }
-
   // Trailing empty cells
   var totalCells = startOffset + lastDay.getDate();
   var remainder  = totalCells % 7;
@@ -1631,45 +1610,11 @@ async function submitAddClass() {
       msgEl.textContent = "✅ Class added successfully!";
       msgEl.className   = "msg success";
 
-      // Add to recent list. - adding error messages
-      if (res.success) {
-      try {
-        msgEl.textContent = "✅ Class added successfully!";
-        msgEl.className   = "msg success";
-      } catch(e) { console.log("CRASH at step 1:", e.message); }
+      adRecentClasses.unshift({ date, time, location, classType, coach });
+      adRenderRecent();
 
-      try {
-        adRecentClasses.unshift({ date, time, location, classType, coach });
-        adRenderRecent();
-      } catch(e) { console.log("CRASH at step 2:", e.message); }
-
-      try {
-        var timeDisp = new Date("1970-01-01T" + time + ":00")
-          .toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
-        schedData.push({
-          rowIndex: 999999, date, day: new Date(date+"T12:00:00")
-            .toLocaleDateString("en-US",{weekday:"long"}),
-          time, timeDisplay: timeDisp, location, classType, coach, isSwap: false
-        });
-      } catch(e) { console.log("CRASH at step 3:", e.message); }
-
-      document.getElementById("adTime").value      = "";
-      document.getElementById("adLocation").value  = "";
-      document.getElementById("adClassType").value = "";
-      document.getElementById("adNotes").value = "";
-      document.getElementById("adCoach").value     = "";
-      document.getElementById("adHours").value = "";
-
-      try {
-        showToast("Class added!");
-      } catch(e) { console.log("CRASH at step 5:", e.message); }
-    }
-
-      // Add to local schedData so calendar reflects it immediately
       var timeDisp = new Date("1970-01-01T" + time + ":00")
         .toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
-      var timeFmt  = time.replace(":", "");
-      if (timeFmt.length === 4) timeFmt = "0" + timeFmt;
       schedData.push({
         rowIndex:    999999,
         date:        date,
@@ -1682,11 +1627,12 @@ async function submitAddClass() {
         isSwap:      false
       });
 
-      // Clear form
       document.getElementById("adTime").value      = "";
       document.getElementById("adLocation").value  = "";
       document.getElementById("adClassType").value = "";
+      document.getElementById("adNotes").value     = "";
       document.getElementById("adCoach").value     = "";
+      document.getElementById("adHours").value     = "";
 
       showToast("Class added!");
     } else {
