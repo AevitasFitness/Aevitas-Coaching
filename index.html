@@ -1469,6 +1469,7 @@ function buildCoachReport(coach, year, month) {
     var d = new Date(r.date + "T12:00:00");
     return d.getFullYear() === year && d.getMonth() === month;
   });
+  var dayMap = {}, totals = {};
 
   // Build day map: dateStr → [{ classType, location }]
   monthData.forEach(function(r) {
