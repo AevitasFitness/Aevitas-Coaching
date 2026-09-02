@@ -40,7 +40,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 .tog-gd.off  { background: #f0f0f0; color: #999; border-color: #ddd; }
 .tog-rl      { background: #E1F5EE; color: #0F6E56; border-color: #5DCAA5; }
 .tog-rl.off  { background: #f0f0f0; color: #999; border-color: #ddd; }
-.tog-ftp      { background: #FEF3E2; color: #8B4513; border-color: #F4A460; }
+.tog-ftp      { background: #FFF0E6; color: #B34700; border-color: #FF8C42; }
 .tog-ftp.off  { background: #f0f0f0; color: #999; border-color: #ddd; }
 
 .cal-outer { overflow-x: auto; }
@@ -56,7 +56,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 .head-loc { font-size: 9px; font-weight: 500; padding: 1px 5px; border-radius: 3px; }
 .head-loc.gd { background: #E6F1FB; color: #185FA5; }
 .head-loc.rl { background: #E1F5EE; color: #0F6E56; }
-.head-loc.ftp { background: #FEF3E2; color: #8B4513; }
+.head-loc.ftp { background: #FFF0E6; color: #B34700; }
 .cal-outer { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .cal-row, .cal-head { align-items: stretch; }
 .chip { word-break: break-word; }
@@ -73,7 +73,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 .chip-swap  { font-size: 8px; font-weight: 500; color: #854F0B; margin-top: 1px; }
 .gd-chip   { background: #E6F1FB; color: #0C447C; }
 .rl-chip   { background: #E1F5EE; color: #085041; }
-.ftp-chip     { background: #FEF3E2; color: #8B4513; }
+.ftp-chip  { background: #FFF0E6; color: #B34700; }
 .wl-chip   { background: #EEEDFE; color: #3C3489; }
 .vf-chip   { background: #EAF3DE; color: #27500A; }
 .og-chip   { background: #FAEEDA; color: #633806; }
@@ -161,6 +161,16 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
 .loading { text-align: center; padding: 40px; color: #888; font-size: 14px; }
 .hint { font-size: 11px; color: #aaa; margin-top: 6px; }
 
+.rpt-section { min-height: 20px; padding: 2px 0; }
+.rpt-section-mid { 
+  border-top: 1px dashed #ddd; 
+  border-bottom: 1px dashed #ddd; 
+  min-height: 20px; 
+  padding: 2px 0; 
+  margin: 2px 0;
+}
+.rpt-section-eve { min-height: 20px; padding: 2px 0; }
+
 .rpt-wrap { background: white; border-radius: 10px;
             border: 0.5px solid #e0e0e0; overflow: hidden; margin-bottom: 16px; }
 .rpt-title { background: #4a86e8; color: white; padding: 10px 16px;
@@ -173,7 +183,7 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
              background: #f8f8f8; border-bottom: 0.5px solid #e0e0e0;
              border-right: 0.5px solid #f0f0f0; }
 .rpt-dname:last-child { border-right: none; }
-.rpt-day { padding: 5px; min-height: 70px; border-bottom: 0.5px solid #f0f0f0;
+.rpt-day { padding: 5px; min-height: 90px; border-bottom: 0.5px solid #f0f0f0;
            border-right: 0.5px solid #f0f0f0; vertical-align: top; }
 .rpt-day:nth-child(7n) { border-right: none; }
 .rpt-day.other { background: #fafafa; }
@@ -325,7 +335,7 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
   <div class="legend" id="legend">
     <div class="li"><div class="ld" style="background:#E6F1FB;border:1px solid #85B7EB"></div>Guilderland</div>
     <div class="li"><div class="ld" style="background:#E1F5EE;border:1px solid #5DCAA5"></div>Round Lake</div>
-    <div class="li"><div class="ld" style="background:#FEF3E2;border:1px solid #F4A460"></div>Colonie</div>
+    <div class="li"><div class="ld" style="background:#FFF0E6;border:1px solid #FF8C42"></div>Colonie</div>
     <div class="li"><div class="ld" style="background:#EAF3DE;border:1px solid #C0DD97"></div>ViTaFIT</div>
     <div class="li"><div class="ld" style="background:#EEEDFE;border:1px solid #CECBF6"></div>Weightlifting</div>
     <div class="li"><div class="ld" style="background:#FAEEDA;border:1px solid #FAC775"></div>Open Gym</div>
@@ -1376,21 +1386,50 @@ function renderOpenSlots(year, month) {
 
   for (var i = 0; i < startOffset; i++) html += "<div class='rpt-day other'></div>";
 
-  for (var d = 1; d <= lastDay.getDate(); d++) {
+    for (var d = 1; d <= lastDay.getDate(); d++) {
     var dateStr = year + "-" + String(month+1).padStart(2,"0") + "-" + String(d).padStart(2,"0");
-    var slots   = byDate[dateStr] || [];
     var isToday = dateStr === today;
+    var classes = dayMap[dateStr] || [];
 
-    html += "<div class='rpt-day" + (isToday ? " today-r" : "") + 
-            (slots.length ? "' style='background:#fff5f5" : "") + "'>";
-    html += "<div class='rpt-daynum" + (slots.length ? " has-classes" : "") + 
-            "' style='" + (slots.length ? "color:#e53935;font-weight:700" : "") + "'>" + d + "</div>";
-    slots.forEach(function(slot) {
-      var locClass = slot.location === "Guilderland" ? "gd" : slot.location === "Round Lake" ? "rl" : "ftp";
-      html += "<div class='rpt-class " + locClass + "' style='background:#FCEBEB;color:#A32D2D'>" +
-              slot.timeDisplay + " · " + slot.classType + " · " + 
-              (slot.location === "Guilderland" ? "GD" : slot.location === "Round Lake" ? "RL" : "FTP") + "</div>";
+    // Split into time sections
+    var morning = [], midday = [], evening = [];
+    classes.forEach(function(cls) {
+      var t = cls.time ? parseInt(cls.time.replace(":", "")) : 0;
+      if (t >= 1200 && t < 1600)      midday.push(cls);
+      else if (t >= 1600)              evening.push(cls);
+      else                             morning.push(cls);
     });
+
+    html += "<div class='rpt-day" + (isToday ? " today-r" : "") + "'>";
+    html += "<div class='rpt-daynum" + (classes.length ? " has-classes" : "") + "'>" + d + "</div>";
+
+    // Morning section
+    html += "<div class='rpt-section'>";
+    morning.forEach(function(cls) {
+      var lc = cls.location === "Guilderland" ? "gd" : cls.location === "Round Lake" ? "rl" : "ftp";
+      var ll = cls.location === "Guilderland" ? "GD" : cls.location === "Round Lake" ? "RL" : "FTP";
+      html += "<div class='rpt-class " + lc + "'>" + cls.classType + " · " + ll + "</div>";
+    });
+    html += "</div>";
+
+    // Midday section
+    html += "<div class='rpt-section rpt-section-mid'>";
+    midday.forEach(function(cls) {
+      var lc = cls.location === "Guilderland" ? "gd" : cls.location === "Round Lake" ? "rl" : "ftp";
+      var ll = cls.location === "Guilderland" ? "GD" : cls.location === "Round Lake" ? "RL" : "FTP";
+      html += "<div class='rpt-class " + lc + "'>" + cls.classType + " · " + ll + "</div>";
+    });
+    html += "</div>";
+
+    // Evening section
+    html += "<div class='rpt-section rpt-section-eve'>";
+    evening.forEach(function(cls) {
+      var lc = cls.location === "Guilderland" ? "gd" : cls.location === "Round Lake" ? "rl" : "ftp";
+      var ll = cls.location === "Guilderland" ? "GD" : cls.location === "Round Lake" ? "RL" : "FTP";
+      html += "<div class='rpt-class " + lc + "'>" + cls.classType + " · " + ll + "</div>";
+    });
+    html += "</div>";
+
     html += "</div>";
   }
 
@@ -1432,10 +1471,10 @@ function buildCoachReport(coach, year, month) {
   });
 
   // Build day map: dateStr → [{ classType, location }]
-  var dayMap = {};
   monthData.forEach(function(r) {
     if (!dayMap[r.date]) dayMap[r.date] = [];
-    dayMap[r.date].push({ classType: r.classType, location: r.location });
+    dayMap[r.date].push({ classType: r.classType, location: r.location, time: r.time });
+    totals[r.classType] = (totals[r.classType] || 0) + (r.hours || 1);
   });
 
   // Build monthly totals
