@@ -668,17 +668,23 @@ var schedCertMap      = {};
 async function initSchedule() {
   try {
     // Load cached data instantly if available
-    try {
+        try {
       var cached = localStorage.getItem("schedCache");
       if (cached) {
         var parsedCache = JSON.parse(cached);
-        schedData       = parsedCache.schedule    || [];
-        schedCoaches    = parsedCache.coaches     || [];
-        schedClassTypes = parsedCache.classTypes  || [];
-        buildWeekList();
-        landingDataReady = true;
-        var status = document.getElementById("landingStatus");
-        if (status) status.textContent = "✅ Ready!";
+        var cacheAge    = new Date().getTime() - (parsedCache.savedAt || 0);
+        var maxAge      = 30 * 60 * 1000; // 30 minutes
+        if (cacheAge < maxAge) {
+          schedData       = parsedCache.schedule    || [];
+          schedCoaches    = parsedCache.coaches     || [];
+          schedClassTypes = parsedCache.classTypes  || [];
+          buildWeekList();
+          landingDataReady = true;
+          var status = document.getElementById("landingStatus");
+          if (status) status.textContent = "✅ Ready!";
+        } else {
+          localStorage.removeItem("schedCache");
+        }
       }
     } catch(ce) {}
 
@@ -693,7 +699,8 @@ async function initSchedule() {
       localStorage.setItem("schedCache", JSON.stringify({
         schedule:   schedData,
         coaches:    schedCoaches,
-        classTypes: schedClassTypes
+        classTypes: schedClassTypes,
+        savedAt:    new Date().getTime()
       }));
     } catch(se) {}
 
