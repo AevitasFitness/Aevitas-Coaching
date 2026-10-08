@@ -673,7 +673,7 @@ async function initSchedule() {
       if (cached) {
         var parsedCache = JSON.parse(cached);
         var cacheAge    = new Date().getTime() - (parsedCache.savedAt || 0);
-        var maxAge      = 30 * 60 * 1000; // 30 minutes
+        var maxAge      = 120 * 60 * 1000; // 2 hrs
         if (cacheAge < maxAge) {
           schedData       = parsedCache.schedule    || [];
           schedCoaches    = parsedCache.coaches     || [];
