@@ -278,6 +278,23 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
           <div style="font-size:11px;color:#888;">Personal training sessions</div>
         </div>
       </label>
+
+      <div style="border-top:1px solid #f0f0f0;margin:4px 0;"></div>
+
+      <label style="display:flex; align-items:center; gap:12px; padding:12px 14px;
+                    border:1.5px solid #e0e0e0; border-radius:8px; cursor:pointer;
+                    transition:border-color 0.15s; background:#f8f8f8;" id="lbl-myweek"
+             onclick="landingMyWeek()">
+        <div style="width:18px;height:18px;background:#4a86e8;border-radius:4px;
+                    display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span style="color:white;font-size:12px">→</span>
+        </div>
+        <div>
+          <div style="font-weight:500;font-size:14px;">My Coaching Week</div>
+          <div style="font-size:11px;color:#888;">See just your classes</div>
+        </div>
+      </label>
+
     </div>
 
     <div id="landingMsg" style="font-size:12px;color:#e53935;margin-bottom:10px;
@@ -306,6 +323,7 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
     <button class="nav-tab active" onclick="showPage('schedule',this)">Schedule</button>
     <button class="nav-tab" onclick="showPage('availability',this)">Availability</button>
     <button class="nav-tab" onclick="showPage('totals',this)">Totals</button>
+    <button class="nav-tab" id="myWeekTab" onclick="showPage('myweek',this)">My Week</button>
     <button class="nav-tab" onclick="showPage('admin',this)">⚙️ Admin</button>
   </div>
 </nav>
@@ -430,6 +448,22 @@ select, input { width: 100%; padding: 9px 11px; border: 0.5px solid #ddd;
 
 <div class="toast" id="toast"></div>
 
+<!-- MY WEEK -->
+<div class="page" id="page-myweek">
+  <div class="toolbar">
+    <div class="week-nav">
+      <button class="btn" onclick="mwChangeWeek(-1)">&#8592;</button>
+      <div class="week-title" id="mwWeekTitle">My Week</div>
+      <button class="btn" onclick="mwChangeWeek(1)">&#8594;</button>
+    </div>
+    <select id="mwCoachSelect" onchange="mwRender()"
+            style="margin:0;padding:6px 10px;font-size:13px;width:160px;">
+      <option value="">— Select coach —</option>
+    </select>
+  </div>
+  <div id="mwContainer"><div class="loading">Select your name above to see your week.</div></div>
+</div>
+
 <!-- ADMIN -->
 <div class="page" id="page-admin">
   <div class="card">
@@ -537,6 +571,10 @@ function showPage(id, btn) {
     // Wait for data to be ready on mobile
     if (schedCoaches && schedCoaches.length) {
       initAdmin();
+  if (id === "myweek") {
+    mwWeekIdx = schedWeekIdx;
+    initMyWeek();
+  }
     } else {
       var checkInterval = setInterval(function() {
         if (schedCoaches && schedCoaches.length) {
@@ -586,9 +624,12 @@ function landingLoadPrefs() {
   } catch(e) {}
 }
 
-function landingSavePrefs(gd, rl, pt) {
+function landingSavePrefs(gd, rl, ftp, pt) {
   try {
-    sessionStorage.setItem("coachPortalPrefs", JSON.stringify({ gd, rl, pt }));
+    var existing = JSON.parse(sessionStorage.getItem("coachPortalPrefs") || "{}");
+    sessionStorage.setItem("coachPortalPrefs", JSON.stringify({
+      gd, rl, ftp, pt, myCoach: existing.myCoach || ""
+    }));
   } catch(e) {}
 }
 
@@ -651,6 +692,32 @@ async function landingSubmit() {
   renderWeek();
 }
 
+function landingMyWeek() {
+  // Hide landing, go straight to My Week tab
+  document.getElementById("landing").style.display = "none";
+  document.querySelectorAll(".nav-tab").forEach(function(t) { t.classList.remove("active"); });
+  document.getElementById("myWeekTab").classList.add("active");
+  document.querySelectorAll(".page").forEach(function(p) { p.classList.remove("active"); });
+  document.getElementById("page-myweek").classList.add("active");
+
+  // Apply default location prefs in background
+  try {
+    var prefs = JSON.parse(sessionStorage.getItem("coachPortalPrefs") || "{}");
+    gdOn = prefs.gd !== undefined ? prefs.gd : true;
+    rlOn = prefs.rl !== undefined ? prefs.rl : true;
+    ftpOn = prefs.ftp !== undefined ? prefs.ftp : true;
+    ptOn  = prefs.pt  !== undefined ? prefs.pt  : false;
+  } catch(e) {}
+
+  // Save prefs so refresh skips landing
+  sessionStorage.setItem("coachPortalPrefs", JSON.stringify({
+    gd: gdOn, rl: rlOn, ftp: ftpOn, pt: ptOn, myCoach: mwCoach
+  }));
+
+  mwWeekIdx = schedWeekIdx;
+  initMyWeek();
+}
+
 // ════════════════════════════════════════════════
 // SCHEDULE
 // ════════════════════════════════════════════════
@@ -664,6 +731,8 @@ var schedClassTypes = [];
 var schedBlackouts    = [];
 var schedAvailability = { header: [], rows: [] };
 var schedCertMap      = {};
+var mwWeekIdx = 0;
+var mwCoach   = "";
 
 async function initSchedule() {
   try {
@@ -881,6 +950,144 @@ function renderWeek() {
   });
   h += "</div></div></div>";
   document.getElementById("calContainer").innerHTML = h;
+}
+
+// ════════════════════════════════════════════════
+// MY WEEK
+// ════════════════════════════════════════════════
+function initMyWeek() {
+  var sel = document.getElementById("mwCoachSelect");
+  if (sel.options.length > 1) return; // already populated
+  schedCoaches.forEach(function(n) {
+    var o = document.createElement("option");
+    o.value = o.textContent = n;
+    sel.appendChild(o);
+  });
+  // If coach was selected on landing page, pre-select
+  try {
+    var prefs = JSON.parse(sessionStorage.getItem("coachPortalPrefs") || "{}");
+    if (prefs.myCoach) {
+      sel.value = prefs.myCoach;
+      mwCoach   = prefs.myCoach;
+    }
+  } catch(e) {}
+  mwWeekIdx = schedWeekIdx;
+  mwRender();
+}
+
+function mwChangeWeek(dir) {
+  mwWeekIdx = Math.max(0, Math.min(schedWeeks.length - 1, mwWeekIdx + dir));
+  mwRender();
+}
+
+function mwRender() {
+  var coach = document.getElementById("mwCoachSelect").value;
+  mwCoach   = coach;
+
+  // Save coach preference
+  try {
+    var prefs = JSON.parse(sessionStorage.getItem("coachPortalPrefs") || "{}");
+    prefs.myCoach = coach;
+    sessionStorage.setItem("coachPortalPrefs", JSON.stringify(prefs));
+  } catch(e) {}
+
+  if (!coach) {
+    document.getElementById("mwContainer").innerHTML =
+      "<div class='loading'>Select your name above to see your week.</div>";
+    return;
+  }
+
+  if (!schedWeeks.length) {
+    document.getElementById("mwContainer").innerHTML =
+      "<div class='loading'>Loading schedule...</div>";
+    return;
+  }
+
+  var monday = new Date(schedWeeks[mwWeekIdx] + "T12:00:00");
+  var sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+  document.getElementById("mwWeekTitle").textContent =
+    "Week of " + fmtDisp(monday);
+
+  var wStart = fmtDate(monday), wEnd = fmtDate(sunday);
+  var wkData = schedData.filter(function(r) {
+    return r.coach === coach && r.date >= wStart && r.date <= wEnd;
+  });
+
+  // Filter out hidden types
+  var hiddenTypes = ["cleaning","programming","social media","member success"];
+  wkData = wkData.filter(function(r) {
+    var ct = (r.classType || "").toLowerCase();
+    return hiddenTypes.indexOf(ct) < 0;
+  });
+
+  if (!wkData.length) {
+    document.getElementById("mwContainer").innerHTML =
+      "<div class='loading' style='padding:40px'>" +
+      "<div style='font-size:24px;margin-bottom:8px'>😴</div>" +
+      "<div>No classes scheduled for " + coach + " this week.</div></div>";
+    return;
+  }
+
+  var DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+  var dayDates = DAYS.map(function(_, i) {
+    var d = new Date(monday); d.setDate(monday.getDate() + i); return fmtDate(d);
+  });
+
+  var today = fmtDate(new Date());
+  var html  = "<div style='display:flex;flex-direction:column;gap:10px;'>";
+
+  DAYS.forEach(function(day, di) {
+    var ds      = dayDates[di];
+    var classes = wkData.filter(function(r) { return r.date === ds; });
+    if (!classes.length) return;
+
+    var date    = new Date(ds + "T12:00:00");
+    var dateStr = date.toLocaleDateString("en-US", { weekday:"long", month:"short", day:"numeric" });
+    var isToday = ds === today;
+
+    html += "<div style='background:white;border-radius:10px;" +
+            "border:0.5px solid " + (isToday ? "#4a86e8" : "#e0e0e0") + ";" +
+            (isToday ? "box-shadow:0 0 0 2px #c5d8fb;" : "") + "overflow:hidden'>";
+
+    html += "<div style='padding:8px 14px;background:" +
+            (isToday ? "#4a86e8" : "#f8f8f8") + ";border-bottom:0.5px solid #e0e0e0'>" +
+            "<span style='font-weight:600;font-size:13px;color:" +
+            (isToday ? "white" : "#333") + "'>" + dateStr + "</span>" +
+            (isToday ? "<span style='font-size:11px;color:rgba(255,255,255,0.8);margin-left:8px'>Today</span>" : "") +
+            "</div>";
+
+    html += "<div style='padding:8px;display:flex;flex-direction:column;gap:6px'>";
+
+    // Sort by time
+    classes.sort(function(a, b) { return a.time.localeCompare(b.time); });
+
+    classes.forEach(function(slot) {
+      var cc = getChipClass(slot.classType, slot.location);
+      var locLabel = slot.location === "Guilderland" ? "GD" :
+                     slot.location === "Round Lake"  ? "RL" : "FTP";
+      var locClass = slot.location === "Guilderland" ? "gd" :
+                     slot.location === "Round Lake"  ? "rl" : "ftp";
+
+      html += "<div class='chip " + cc + "' style='padding:8px 10px;display:flex;" +
+              "align-items:center;justify-content:space-between;border-radius:7px'>" +
+              "<div>" +
+              "<div style='font-weight:600;font-size:12px'>" + slot.classType + "</div>" +
+              "<div style='font-size:11px;opacity:0.8;margin-top:2px'>" + slot.timeDisplay +
+              (slot.notes ? " · " + slot.notes : "") + "</div>" +
+              "</div>" +
+              "<span class='head-loc " + locClass + "' style='font-size:10px;padding:2px 6px'>" +
+              locLabel + "</span>" +
+              "</div>";
+    });
+
+    html += "</div></div>";
+  });
+
+  html += "<div style='padding:8px;text-align:center;font-size:12px;color:#888'>" +
+          wkData.length + " class" + (wkData.length !== 1 ? "es" : "") + " this week</div>";
+  html += "</div>";
+
+  document.getElementById("mwContainer").innerHTML = html;
 }
 
 async function doUpdateCoach(rowIndex, newCoach, sel) {
