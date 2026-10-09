@@ -774,7 +774,7 @@ async function initSchedule() {
     } catch(se) {}
 
     buildWeekList();
-    landingDataReady = true;
+        landingDataReady = true;
     var status = document.getElementById("landingStatus");
     if (status) status.textContent = "✅ Ready!";
 
@@ -782,6 +782,10 @@ async function initSchedule() {
     var landing = document.getElementById("landing");
     if (landing && landing.style.display === "none") {
       renderWeek();
+      // Re-init My Week in case it was open
+      if (document.getElementById("page-myweek").classList.contains("active")) {
+        initMyWeek();
+      }
     }
   } catch(e) {
     landingDataReady = true;
@@ -957,6 +961,11 @@ function renderWeek() {
 // ════════════════════════════════════════════════
 function initMyWeek() {
   var sel = document.getElementById("mwCoachSelect");
+  if (!schedCoaches || !schedCoaches.length) {
+    // Data not ready yet — try again shortly
+    setTimeout(initMyWeek, 300);
+    return;
+  }
   if (sel.options.length > 1) return; // already populated
   schedCoaches.forEach(function(n) {
     var o = document.createElement("option");
