@@ -960,26 +960,11 @@ function renderWeek() {
 // MY WEEK
 // ════════════════════════════════════════════════
 function initMyWeek() {
-  var sel = document.getElementById("mwCoachSelect");
   if (!schedCoaches || !schedCoaches.length) {
-    // Data not ready yet — try again shortly
     setTimeout(initMyWeek, 300);
     return;
   }
-  if (sel.options.length > 1) return; // already populated
-  schedCoaches.forEach(function(n) {
-    var o = document.createElement("option");
-    o.value = o.textContent = n;
-    sel.appendChild(o);
-  });
-  // If coach was selected on landing page, pre-select
-  try {
-    var prefs = JSON.parse(sessionStorage.getItem("coachPortalPrefs") || "{}");
-    if (prefs.myCoach) {
-      sel.value = prefs.myCoach;
-      mwCoach   = prefs.myCoach;
-    }
-  } catch(e) {}
+  initMyWeekDropdown();
   mwWeekIdx = schedWeekIdx;
   mwRender();
 }
@@ -987,6 +972,24 @@ function initMyWeek() {
 function mwChangeWeek(dir) {
   mwWeekIdx = Math.max(0, Math.min(schedWeeks.length - 1, mwWeekIdx + dir));
   mwRender();
+}
+
+function initMyWeekDropdown() {
+  var sel = document.getElementById("mwCoachSelect");
+  if (sel.options.length > 1) return;
+  schedCoaches.forEach(function(n) {
+    var o = document.createElement("option");
+    o.value = o.textContent = n;
+    sel.appendChild(o);
+  });
+  // Restore saved coach
+  try {
+    var prefs = JSON.parse(sessionStorage.getItem("coachPortalPrefs") || "{}");
+    if (prefs.myCoach) {
+      sel.value = prefs.myCoach;
+      mwCoach   = prefs.myCoach;
+    }
+  } catch(e) {}
 }
 
 function mwRender() {
@@ -1920,6 +1923,7 @@ window.onload = function() {
     initSchedule().then(function() {
     initAvailability();
     initAvailabilityData(); // load blackouts in background for dropdown warnings
+    initMyWeekDropdown();
   });
 };
 </script>
