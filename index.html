@@ -862,8 +862,8 @@ function renderWeek() {
 
   var wStart  = fmtDate(monday);
   var wEnd    = fmtDate(sunday);
-  var hiddenTypes = ["cleaning", "programming", "social media", "member success"];
-  var ptTypes = ["personal training", "onramp", "gym rental"];
+  var hiddenTypes = ["cleaning", "programming", "member success"];
+  var ptTypes = ["personal training", "onramp", "gym rental", "social media"];
   var wkData = schedData.filter(function(r) {
     if (r.date < wStart || r.date > wEnd) return false;
     var ct = (r.classType || "").toLowerCase();
