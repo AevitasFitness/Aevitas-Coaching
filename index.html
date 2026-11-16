@@ -566,15 +566,12 @@ function showPage(id, btn) {
   document.getElementById("page-" + id).classList.add("active");
   if (btn) btn.classList.add("active");
   if (id === "totals" && !totalsLoaded) loadTotals();
+  if (id === "myweek") initMyWeek();
   if (id === "admin" && !adminInitialized) {
     adminInitialized = true;
     // Wait for data to be ready on mobile
     if (schedCoaches && schedCoaches.length) {
       initAdmin();
-  if (id === "myweek") {
-    mwWeekIdx = schedWeekIdx;
-    initMyWeek();
-  }
     } else {
       var checkInterval = setInterval(function() {
         if (schedCoaches && schedCoaches.length) {
@@ -960,13 +957,25 @@ function renderWeek() {
 // MY WEEK
 // ════════════════════════════════════════════════
 function initMyWeek() {
-  if (!schedCoaches || !schedCoaches.length) {
+  if (!schedCoaches || !schedCoaches.length || !schedWeeks.length) {
     setTimeout(initMyWeek, 300);
     return;
   }
   initMyWeekDropdown();
-  mwWeekIdx = schedWeekIdx;
+  mwWeekIdx = mwCurrentWeekIdx();
   mwRender();
+}
+
+function mwCurrentWeekIdx() {
+  var today = new Date();
+  var day   = today.getDay();
+  var mon   = new Date(today);
+  mon.setDate(today.getDate() + (day === 0 ? -6 : 1 - day));
+  var mk  = fmtDate(mon);
+  var idx = schedWeeks.indexOf(mk);
+  if (idx >= 0) return idx;
+  idx = schedWeeks.findIndex(function(w) { return w > mk; });
+  return idx >= 0 ? idx : Math.max(0, schedWeeks.length - 1);
 }
 
 function mwChangeWeek(dir) {
@@ -1425,7 +1434,16 @@ function avRenderSubs() {
     "available_pm": "🌆 PM only",
     "available": "✅ All day"
   };
-  list.innerHTML = avSubs.slice().sort(function(a,b) {
+  var now        = new Date();
+  var monthStart = fmtDate(new Date(now.getFullYear(), now.getMonth(), 1));
+  var shown = avSubs.filter(function(s) {
+    return (s.endDate || s.startDate) >= monthStart;
+  });
+  if (!shown.length) {
+    list.innerHTML = "<div style='color:#888;font-size:13px'>No submissions for this month or later.</div>";
+    return;
+  }
+  list.innerHTML = shown.sort(function(a,b) {
     return a.startDate.localeCompare(b.startDate);
   }).map(function(s) {
     var norm  = avNorm(s.type, s.startTime, s.endTime);
